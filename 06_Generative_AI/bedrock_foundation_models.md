@@ -1,5 +1,10 @@
 # CONCEPT 1 : Bedrock Foundation Models (Mô hình nền tảng)
 
+<figure style="text-align: center;">
+  <img src="./assets/bedrock_supervisor-agents.gif" alt="Amazon Bedrock Foundation Models" width="600"/>
+    <figcaption><b>Hình 1:</b> Amazon Bedrock Foundation Models - Nền tảng cho mọi ứng dụng AI.</figcaption>
+</figure>
+
 ## 1. Tổng quan về Amazon Bedrock và các mô hình nền tảng (Foundation Models - FMs)
 
 ### A. Amazon Bedrock là gì?
