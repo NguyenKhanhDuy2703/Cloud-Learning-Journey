@@ -3,18 +3,18 @@
 Mỗi khi một hàm Lambda được gọi, AWS sẽ tạo ra một môi trường thực thi (Execution Environment) để chạy mã của bạn. Vòng đời của môi trường này bao gồm 3 giai đoạn chính:
 * **Init Phase** (Khởi tạo): AWS Lambda tải mã nguồn và các thư viện cần thiết vào môi trường. Đây là giai đoạn tốn thời gian nhất, thường gọi là "cold start".
  
-  <figure  align="center">
+  <p  align="center">
     <img src="./assets/lambda_cold-starts.gif" width="600"/>
     <figcaption align="center"><i> Hình 1 : Hiện tượng "cold start" trong AWS Lambda </i></figcaption>
-    </figure>
+    </p>
 
 * **Invoke Phase** (Thực thi): Môi trường đã sẵn sàng, Lambda thực thi mã của bạn để xử lý sự kiện. Nếu có nhiều yêu cầu đến cùng lúc, AWS sẽ tạo thêm nhiều môi trường thực thi mới để đáp ứng.
 * **Idle Phase** (Không hoạt động): Sau khi hoàn thành nhiệm vụ, môi trường sẽ không bị hủy ngay mà được giữ lại trong một khoảng thời gian (thường là vài phút) để phục vụ các yêu cầu tiếp theo, giúp giảm thiểu độ trễ cho các lần gọi sau (warm start).
 
-<figure  align="center">
+<p  align="center">
   <img src="./assets/excution_evironment_lifecycle.png" width="600"/>
   <figcaption align="center"><i> Hình 1 : Vòng đời môi trường thực thi của AWS Lambda </i></figcaption>
-</figure>
+</p>
 
 ## 2. Tổng quan về vai trò của AWS Lambda trong EDA
 AWS Lambda là một dịch vụ điện toán hướng sự kiện (Event-driven).Trong kiến trúc hiện đại, nó đóng vai trò là "trái tim" xử lý logic, phản ứng tức thì với các thay đổi dữ liệu hoặc yêu cầu từ người dùng mà không cần duy trì máy chủ liên tục.
@@ -55,10 +55,10 @@ Tùy thuộc vào nguồn kích hoạt (Trigger), Lambda sẽ thực thi theo m�
 * **Đặc điểm:** Phù hợp cho xử lý dữ liệu lớn hoặc luồng tin nhắn liên tục.
 
 ### D. Synchronous vs Asynchronous
-<figure  align="center">
+<p  align="center">
   <img src="./assets/lambda_async-vs-sync.gif" width="600"/>
   <figcaption align="center"><i> Hình 4 : So sánh cơ chế đồng bộ và bất đồng bộ của AWS Lambda </i></figcaption>
-</figure>
+</p>
 
 
 ## 4. Kiến trúc hướng sự kiện (EDA) với Lambda
