@@ -52,7 +52,7 @@ _ **Quản lý tập trung:** Thay vì quản lý hàng trăm kết nối Peerin
   - Tăng tính bảo mật cho dữ liệu nhạy cảm.
 - **Nhược điểm:** Chi phí cao, thời gian triển khai lâu (từ vài tuần đến vài tháng).
 <p align="center">
-  <img src="./assets/AWS_Direct_Connect.png" width="500"/>
+  <img src="./assets/AWS_Direct_connect.png" width="500"/>
 </p>
 <p align="center"><i> Hình 4 : Mô hình kết nối AWS Direct Connect (Example) </i></p>
 
