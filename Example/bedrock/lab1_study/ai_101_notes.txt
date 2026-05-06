@@ -1,0 +1,16 @@
+CHỦ ĐỀ: TỔNG QUAN VỀ TRÍ TUỆ NHÂN TẠO (AI 101)
+
+1. Khái niệm cơ bản:
+AI là khả năng của máy tính thực hiện các tác vụ đòi hỏi trí tuệ con người như nhận diện hình ảnh, hiểu ngôn ngữ và đưa ra quyết định.
+
+2. Mô hình ngôn ngữ lớn (LLM):
+LLM như Amazon Nova Pro là các mô hình được huấn luyện trên lượng dữ liệu khổng lồ để hiểu ngữ cảnh và tạo văn bản tự nhiên.
+
+3. Kỹ thuật RAG (Retrieval Augmented Generation):
+RAG cho phép AI truy xuất thông tin từ các tài liệu nội bộ (như file .txt này) để trả lời câu hỏi chính xác hơn, tránh tình trạng AI "ảo giác" (bịa thông tin).
+
+4. Ứng dụng trong Quản lý (MIS):
+Trong ngành MIS, AI hỗ trợ tối ưu hóa quy trình doanh nghiệp, phân tích hành vi khách hàng và quản lý chuỗi cung ứng thông qua dữ liệu thời gian thực.
+
+5. Amazon Bedrock:
+Đây là dịch vụ của AWS cung cấp quyền truy cập vào các mô hình AI hàng đầu thông qua API, giúp lập trình viên xây dựng ứng dụng AI nhanh chóng mà không cần quản lý hạ tầng máy chủ.
