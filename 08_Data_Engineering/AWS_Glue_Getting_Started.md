@@ -1,7 +1,3 @@
-Chào bạn, với tư cách là một **AWS Certified Solutions Architect**, tôi sẽ hệ thống hóa toàn bộ nội dung về **AWS Glue** mà bạn cung cấp thành một tài liệu học tập chuyên sâu, logic và chuyên nghiệp.
-
----
-
 # AWS Glue: Toàn Tập về Tích Hợp Dữ Liệu Phi Máy Chủ (Serverless Data Integration)
 
 ## Overview

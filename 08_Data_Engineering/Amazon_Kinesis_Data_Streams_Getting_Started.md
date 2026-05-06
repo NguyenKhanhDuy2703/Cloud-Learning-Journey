@@ -1,9 +1,3 @@
-Chào Duy, với tư cách là một **AWS Certified Solutions Architect**, tôi đã hệ thống lại nội dung bài học về **Amazon Kinesis Data Streams** dựa trên tài liệu và sơ đồ kiến trúc `image_cae97a.png` mà bạn cung cấp. 
-
-Dưới đây là tài liệu học tập chuyên nghiệp dành cho bạn.
-
----
-
 # Amazon Kinesis Data Streams (KDS)
 
 ## ## Overview
