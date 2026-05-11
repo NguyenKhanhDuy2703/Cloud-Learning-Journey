@@ -2,7 +2,7 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 # Import hàm từ file tiện ích đã tạo ở bước trước
-from bedrock_utils import invoke_nova_model, get_embedding
+from bedrock_utils import invoke_nova_model, get_embedding, retrieve_from_knowledge_base
 
 load_dotenv()
 
@@ -16,6 +16,7 @@ top_p = 0.5
 
 # --- GIAO DIỆN TABS (Exercise 2: Local RAG) ---
 tab1, tab2 = st.tabs(["💬 Chat", "📁 Local Documents"])
+knowledge_base_id = os.environ.get("KNOWLEDGE_BASE_ID", "BZHFPFMANP")
 
 with tab1:
     if "messages" not in st.session_state:
@@ -38,6 +39,14 @@ with tab1:
 
 with tab2:
     st.header("Tải tài liệu học tập")
+    st.caption(f"Knowledge Base đang dùng: {knowledge_base_id}")
+    kb_question = st.text_input("Hỏi Knowledge Base", placeholder="Nhập câu hỏi để tra cứu tài liệu...")
+    if st.button("Tra cứu Knowledge Base") and kb_question.strip():
+        answer, citations = retrieve_from_knowledge_base(kb_question.strip(), knowledge_base_id)
+        st.markdown(answer)
+        if citations:
+            st.write(f"Đã tìm thấy {len(citations)} nguồn tham chiếu.")
+
     uploaded_file = st.file_uploader("Chọn file .txt", type=("txt"))
     
     if uploaded_file is not None:
