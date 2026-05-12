@@ -36,8 +36,14 @@ Khi thành phố phát triển (scaling), thay vì xây hàng trăm cây cầu g
 
 ## 2. Core Components & Keywords
 
+![Core Network Components](./assets/Connectivity_Core_Components.svg)
+
+> **Mục đích sơ đồ:** Trực quan hóa các thành phần mạng AWS chia thành 3 lớp phân tầng từ nền tảng (VPC Foundation), kết nối nội bộ đám mây (Intra-Cloud) đến môi trường lai (Hybrid Connectivity).
+
 ### **Multi-tier Architecture**
+
 Phân chia ứng dụng thành các tầng chức năng riêng biệt (thường là 3 tầng):
+
 - **Presentation Tier**: Giao diện người dùng (UI)
 - **Application/Logic Tier**: Xử lý business logic
 - **Data Tier**: Lưu trữ và quản lý dữ liệu
@@ -45,41 +51,54 @@ Phân chia ứng dụng thành các tầng chức năng riêng biệt (thường
 > **Mục đích**: Tăng tính bảo mật bằng cách tạo các lớp phòng thủ (defense-in-depth), cách ly tài nguyên nhạy cảm khỏi các điểm tiếp xúc bên ngoài.
 
 ### **Amazon VPC (Virtual Private Cloud)**
+
 Mạng ảo logic được cách ly, cho phép khách hàng định nghĩa và kiểm soát hoàn toàn môi trường mạng của mình trong AWS Cloud (CIDR block, subnets, route tables, security groups, NACLs).
 
 ### **Multi-VPC Architecture**
+
 Kiến trúc sử dụng nhiều VPC độc lập, mỗi VPC phục vụ một ứng dụng, môi trường (dev/staging/prod), hoặc đơn vị kinh doanh khác nhau. Các VPC có thể được kết nối qua VPC Peering, Transit Gateway, hoặc PrivateLink.
 
 ### **High Availability (HA)**
+
 Thiết kế mạng nhằm giảm thiểu downtime và tránh mất kết nối giữa các endpoint. Đạt được bằng cách:
+
 - Loại bỏ Single Points of Failure (SPOF)
 - Triển khai các thành phần dự phòng (redundant components)
 - Phân phối tải (load distribution)
 
 ### **Hybrid Network**
+
 Kiến trúc kết nối giữa ít nhất hai môi trường độc lập (ví dụ: AWS Cloud + On-premises data center), cho phép các dịch vụ giao tiếp với nhau như trong mạng truyền thống.
 
 ### **AWS Transit Gateway**
+
 Dịch vụ hub trung tâm giúp kết nối hàng nghìn VPC và mạng on-premises thông qua một điểm kết nối duy nhất. Đơn giản hóa routing và quản lý mạng quy mô lớn.
 
 ### **VPC Peering**
+
 Kết nối point-to-point giữa hai VPC, cho phép routing traffic trực tiếp thông qua địa chỉ IP private. **Non-transitive**: VPC A peering VPC B, VPC B peering VPC C → VPC A KHÔNG thể giao tiếp với VPC C qua B.
 
 ### **AWS Direct Connect**
+
 Kết nối mạng chuyên dụng (dedicated network connection) từ on-premises đến AWS, không qua Internet công cộng. Cung cấp băng thông cao, latency thấp, và bảo mật hơn.
 
 ### **AWS Site-to-Site VPN**
+
 Kết nối IPsec VPN được mã hóa giữa mạng on-premises và AWS VPC qua Internet công cộng.
 
 ### **AWS PrivateLink**
+
 Dịch vụ cung cấp kết nối private, bảo mật giữa VPC, AWS services, và các ứng dụng on-premises mà không cần Internet Gateway, NAT, VPC Peering.
 
 ### **VPC Endpoints**
+
 Cho phép kết nối private từ VPC đến các AWS services mà không cần đi qua Internet. Có 2 loại:
+
 - **Gateway Endpoints**: S3, DynamoDB
 - **Interface Endpoints**: Powered by PrivateLink, hỗ trợ hầu hết AWS services khác
 
 ### **Route Propagation**
+
 Tính năng tự động cập nhật route tables với các routes được quảng bá từ Virtual Private Gateway (VGW) hoặc Transit Gateway, thay vì cấu hình thủ công.
 
 ---
@@ -88,36 +107,38 @@ Tính năng tự động cập nhật route tables với các routes được qu
 
 ### 3.1. Multi-tier Architecture trong AWS VPC
 
+> **Mục đích sơ đồ:** Minh họa kiến trúc 3 tầng (Web, App, Data) tiêu chuẩn bên trong một VPC. Biểu diễn cách kiểm soát mức độ bảo mật thông qua việc cô lập từng nhóm tài nguyên tại các Subnet Public và Private riêng biệt.
+
 ```mermaid
 flowchart TB
     subgraph Internet["Public Internet"]
         User[End Users]
     end
-    
+
     subgraph VPC["Amazon VPC"]
         IGW[Internet Gateway]
-        
+
         subgraph PublicSubnet["Public Subnet - Presentation Tier"]
             ALB[Application Load Balancer]
         end
-        
+
         subgraph PrivateSubnet1["Private Subnet - Application Tier"]
             EC2_1[EC2 Instances]
             EC2_2[EC2 Instances]
         end
-        
+
         subgraph PrivateSubnet2["Private Subnet - Data Tier"]
             RDS[(RDS Database)]
         end
     end
-    
+
     User -->|HTTPS| IGW
     IGW --> ALB
     ALB -->|Forward Request| EC2_1
     ALB -->|Forward Request| EC2_2
     EC2_1 -->|Query Data| RDS
     EC2_2 -->|Query Data| RDS
-    
+
     style PublicSubnet fill:#e1f5dd
     style PrivateSubnet1 fill:#fff4e6
     style PrivateSubnet2 fill:#ffe6e6
@@ -145,6 +166,8 @@ Giả sử có **9 VPCs** cần kết nối với nhau:
 - Mỗi VPC cần duy trì **8 routing configurations** riêng biệt
 - Tổng **72 routing entries** cần quản lý
 
+> **Mục đích sơ đồ:** Biểu diễn vấn đề giao tiếp phức tạp trong kiến trúc Mesh. Khi số lượng VPC tăng lên, việc cấu hình VPC Peering chéo nhau (Point-to-Point) sẽ trở nên rườm rà, khó vận hành và theo dõi.
+
 ```mermaid
 graph LR
     VPC1((VPC 1))
@@ -153,7 +176,7 @@ graph LR
     VPC4((VPC 4))
     VPC5((VPC 5))
     VPC6((VPC 6))
-    
+
     VPC1 -.->|Peering| VPC2
     VPC1 -.->|Peering| VPC3
     VPC1 -.->|Peering| VPC4
@@ -169,7 +192,7 @@ graph LR
     VPC4 -.->|Peering| VPC5
     VPC4 -.->|Peering| VPC6
     VPC5 -.->|Peering| VPC6
-    
+
     style VPC1 fill:#ff6b6b
     style VPC2 fill:#ff6b6b
     style VPC3 fill:#ff6b6b
@@ -180,42 +203,44 @@ graph LR
 
 #### **Giải pháp: Hub-and-Spoke với Transit Gateway**
 
+> **Mục đích sơ đồ:** Minh họa sức mạnh của Transit Gateway trong kiến trúc Hub-and-Spoke. TGW đóng vai trò là hub trung tâm để kết nối gọn gàng nhiều VPCs và trung tâm dữ liệu On-Premises, giảm triệt để số lượng đường truyền so với Mesh.
+
 ```mermaid
 graph TB
     subgraph Hub["Transit Gateway (Hub)"]
         TGW[AWS Transit Gateway<br/>Centralized Routing]
     end
-    
+
     VPC1[VPC 1<br/>Production]
     VPC2[VPC 2<br/>Development]
     VPC3[VPC 3<br/>Staging]
     VPC4[VPC 4<br/>Analytics]
     VPC5[VPC 5<br/>Security]
     VPC6[VPC 6<br/>Shared Services]
-    
+
     OnPrem[On-Premises<br/>Data Center]
     VPN[Site-to-Site VPN]
     DX[Direct Connect]
-    
+
     VPC1 ---|Attachment| TGW
     VPC2 ---|Attachment| TGW
     VPC3 ---|Attachment| TGW
     VPC4 ---|Attachment| TGW
     VPC5 ---|Attachment| TGW
     VPC6 ---|Attachment| TGW
-    
+
     OnPrem -->|VPN Connection| VPN
     OnPrem -->|Dedicated Fiber| DX
     VPN ---|VPN Attachment| TGW
     DX ---|DX Gateway| TGW
-    
-    style TGW fill:#4ecdc4
-    style VPC1 fill:#95e1d3
-    style VPC2 fill:#95e1d3
-    style VPC3 fill:#95e1d3
-    style VPC4 fill:#95e1d3
-    style VPC5 fill:#95e1d3
-    style VPC6 fill:#95e1d3
+
+    style TGW fill:#025492,color:#ffffff
+    style VPC1 fill:#0369a1,color:#ffffff
+    style VPC2 fill:#0369a1,color:#ffffff
+    style VPC3 fill:#0369a1,color:#ffffff
+    style VPC4 fill:#0369a1,color:#ffffff
+    style VPC5 fill:#0369a1,color:#ffffff
+    style VPC6 fill:#0369a1,color:#ffffff
 ```
 
 **Diagram Explanation:**
@@ -234,6 +259,8 @@ graph TB
 
 ### 3.3. High Availability Hybrid Network Architecture
 
+> **Mục đích sơ đồ:** Trình bày mô hình thiết kế Mạng Lai (Hybrid) với tính sẵn sàng cao (High Availability). Thể hiện cách định tuyến Active-Active hoặc Active-Passive qua 2 đường Direct Connect và thiết lập VPN làm kênh dự phòng (Failover) để tránh lỗi một điểm (SPOF).
+
 ```mermaid
 graph TB
     subgraph AWS["AWS Cloud - us-east-1"]
@@ -241,48 +268,48 @@ graph TB
             TGW_AZ1[Transit Gateway]
             VGW_AZ1[Virtual Private Gateway 1]
         end
-        
+
         subgraph AZ2["Availability Zone 2"]
             VGW_AZ2[Virtual Private Gateway 2]
         end
-        
+
         VPC1[VPC - Production]
         VPC2[VPC - Development]
     end
-    
+
     subgraph DXLocations["Direct Connect Locations"]
         subgraph DXLoc1["DX Location 1 - City A"]
             DXRouter1[AWS DX Router 1]
             CustomerRouter1[Customer Router 1]
         end
-        
+
         subgraph DXLoc2["DX Location 2 - City B"]
             DXRouter2[AWS DX Router 2]
             CustomerRouter2[Customer Router 2]
         end
     end
-    
+
     subgraph OnPrem["On-Premises Data Centers"]
         DC1[Data Center 1]
         DC2[Data Center 2]
     end
-    
+
     VPC1 --> TGW_AZ1
     VPC2 --> TGW_AZ1
     TGW_AZ1 --> VGW_AZ1
     TGW_AZ1 --> VGW_AZ2
-    
+
     VGW_AZ1 ---|Primary Path| DXRouter1
     VGW_AZ2 ---|Backup Path| DXRouter2
-    
+
     DXRouter1 --- CustomerRouter1
     DXRouter2 --- CustomerRouter2
-    
+
     CustomerRouter1 ---|Fiber 1| DC1
     CustomerRouter1 ---|Fiber 2| DC2
     CustomerRouter2 ---|Fiber 3| DC1
     CustomerRouter2 ---|Fiber 4| DC2
-    
+
     style TGW_AZ1 fill:#ff6b6b
     style VGW_AZ1 fill:#4ecdc4
     style VGW_AZ2 fill:#4ecdc4
@@ -308,6 +335,8 @@ graph TB
 
 ### 3.4. Inter-Regional Transit Gateway Peering
 
+> **Mục đích sơ đồ:** Minh họa khả năng kết nối mạng toàn cầu. Sơ đồ cho thấy cách kết nối hai Transit Gateways nằm ở hai vùnh (Regions) địa lý riêng biệt để tạo ra một mạng lưới hợp nhất thống nhất xuyên biên giới.
+
 ```mermaid
 graph TB
     subgraph Region1["AWS Region: us-east-1"]
@@ -316,40 +345,40 @@ graph TB
         VPC1B[VPC 1B - Database]
         VPC1C[VPC 1C - Analytics]
     end
-    
+
     subgraph Region2["AWS Region: eu-west-1"]
         TGW2[Transit Gateway 2]
         VPC2A[VPC 2A - App]
         VPC2B[VPC 2B - Database]
     end
-    
+
     subgraph Region3["AWS Region: ap-southeast-1"]
         TGW3[Transit Gateway 3]
         VPC3A[VPC 3A - App]
         VPC3B[VPC 3B - Database]
     end
-    
+
     subgraph TransitVPC["Transit VPC Region: us-west-2"]
         TGWT[Transit Gateway - Hub]
         VPCT[VPC Transit<br/>Internet Gateway<br/>NAT Gateway<br/>Firewall]
     end
-    
+
     VPC1A --> TGW1
     VPC1B --> TGW1
     VPC1C --> TGW1
-    
+
     VPC2A --> TGW2
     VPC2B --> TGW2
-    
+
     VPC3A --> TGW3
     VPC3B --> TGW3
-    
+
     TGW1 ===|Inter-Region Peering<br/>Encrypted| TGWT
     TGW2 ===|Inter-Region Peering<br/>Encrypted| TGWT
     TGW3 ===|Inter-Region Peering<br/>Encrypted| TGWT
-    
+
     VPCT -.->|Public Internet<br/>Egress/Ingress| Internet((Internet))
-    
+
     style TGWT fill:#e74c3c
     style TGW1 fill:#3498db
     style TGW2 fill:#3498db
@@ -375,6 +404,8 @@ graph TB
 
 ### 3.5. Cross-Regional High Availability with Route 53
 
+> **Mục đích sơ đồ:** Diễn giải trình tự (Sequence) chuyển hướng linh hoạt của Amazon Route 53. Khi khu vực (Region) chính gặp sự cố (Failover), luồng truy cập của người dùng được tự động chuyển hướng sang khu vực dự phòng.
+
 ```mermaid
 sequenceDiagram
     participant User as End User<br/>(Europe)
@@ -382,28 +413,28 @@ sequenceDiagram
     participant Region1 as us-east-1<br/>ALB + EC2 + RDS
     participant Region2 as eu-west-1<br/>ALB + EC2 + RDS
     participant Peering as VPC Peering<br/>Database Sync
-    
+
     User->>R53: DNS Query: app.example.com
     R53->>R53: Measure latency to both Regions
     R53-->>User: Return IP of eu-west-1 ALB<br/>(lowest latency)
-    
+
     User->>Region2: HTTPS Request
     Region2->>Region2: Process Request + Query DB
     Region2-->>User: Response
-    
+
     Region2->>Peering: Replicate DB changes
     Peering->>Region1: Synchronize Database
-    
+
     Note over Region2,Region1: Continuous bi-directional sync
-    
+
     rect rgb(255, 220, 220)
         Note over Region2: Region 2 FAILS<br/>(Outage)
     end
-    
+
     User->>R53: New DNS Query (cache expired)
     R53->>R53: Health Check detects Region 2 DOWN
     R53-->>User: Return IP of us-east-1 ALB<br/>(failover)
-    
+
     User->>Region1: HTTPS Request
     Region1->>Region1: Resume Session from DB<br/>(synchronized data)
     Region1-->>User: Response - Session Continued
@@ -432,16 +463,16 @@ sequenceDiagram
 
 #### **Đặc điểm kỹ thuật**
 
-| Đặc điểm | Chi tiết |
-|----------|----------|
-| **Connection Type** | Point-to-point, 1:1 mapping |
-| **Transitivity** | **Non-transitive** (VPC A ↔ VPC B ↔ VPC C → A không thể nói chuyện với C) |
-| **IP Address Space** | CIDR blocks của 2 VPCs **KHÔNG được overlap** |
-| **Cross-Region Support** | ✅ Có, Inter-Region VPC Peering |
-| **Cross-Account Support** | ✅ Có, hỗ trợ peering giữa các AWS accounts khác nhau |
-| **Encryption** | ✅ Tự động mã hóa cho Inter-Region peering |
-| **Bandwidth** | Không giới hạn, phụ thuộc vào instance type |
-| **Pricing** | Miễn phí trong cùng AZ, tính phí data transfer cho cross-AZ và cross-Region |
+| Đặc điểm                  | Chi tiết                                                                    |
+| ------------------------- | --------------------------------------------------------------------------- |
+| **Connection Type**       | Point-to-point, 1:1 mapping                                                 |
+| **Transitivity**          | **Non-transitive** (VPC A ↔ VPC B ↔ VPC C → A không thể nói chuyện với C)   |
+| **IP Address Space**      | CIDR blocks của 2 VPCs **KHÔNG được overlap**                               |
+| **Cross-Region Support**  | ✅ Có, Inter-Region VPC Peering                                             |
+| **Cross-Account Support** | ✅ Có, hỗ trợ peering giữa các AWS accounts khác nhau                       |
+| **Encryption**            | ✅ Tự động mã hóa cho Inter-Region peering                                  |
+| **Bandwidth**             | Không giới hạn, phụ thuộc vào instance type                                 |
+| **Pricing**               | Miễn phí trong cùng AZ, tính phí data transfer cho cross-AZ và cross-Region |
 
 #### **Use Cases**
 
@@ -452,7 +483,7 @@ sequenceDiagram
 #### **Limitations**
 
 - Maximum **125 peering connections** per VPC
-- Không hỗ trợ **transitive routing** → cần full mesh topology cho N VPCs (N*(N-1)/2 peerings)
+- Không hỗ trợ **transitive routing** → cần full mesh topology cho N VPCs (N\*(N-1)/2 peerings)
 - Không thể sử dụng edge-to-edge routing (ví dụ: VPC A không thể route qua VPC B để đến Internet Gateway của B)
 
 ---
@@ -461,14 +492,14 @@ sequenceDiagram
 
 #### **Core Features**
 
-| Feature | Mô tả |
-|---------|-------|
-| **Attachments** | VPC, VPN, Direct Connect Gateway, Transit Gateway Peering, Connect (SD-WAN) |
-| **Route Tables** | Hỗ trợ multiple route tables cho traffic segmentation (ví dụ: Production vs Non-Production) |
-| **Bandwidth** | Up to **50 Gbps per VPC attachment**, **5 Gbps per VPN attachment** |
-| **MTU** | 8500 bytes (Jumbo frames) cho VPC attachments |
-| **Multicast** | ✅ Hỗ trợ multicast routing |
-| **Appliance Mode** | ✅ Hỗ trợ routing qua network appliances (firewalls, IDS/IPS) |
+| Feature            | Mô tả                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| **Attachments**    | VPC, VPN, Direct Connect Gateway, Transit Gateway Peering, Connect (SD-WAN)                 |
+| **Route Tables**   | Hỗ trợ multiple route tables cho traffic segmentation (ví dụ: Production vs Non-Production) |
+| **Bandwidth**      | Up to **50 Gbps per VPC attachment**, **5 Gbps per VPN attachment**                         |
+| **MTU**            | 8500 bytes (Jumbo frames) cho VPC attachments                                               |
+| **Multicast**      | ✅ Hỗ trợ multicast routing                                                                 |
+| **Appliance Mode** | ✅ Hỗ trợ routing qua network appliances (firewalls, IDS/IPS)                               |
 
 #### **Transit Gateway Route Tables - Advanced Segmentation**
 
@@ -504,10 +535,10 @@ Hỗ trợ kết nối với SD-WAN appliances qua **GRE tunnel** và **BGP rout
 
 #### **Connection Types**
 
-| Type | Bandwidth Options | Lead Time | Use Case |
-|------|-------------------|-----------|----------|
-| **Dedicated Connection** | 1 Gbps, 10 Gbps, 100 Gbps | 2-4 weeks | Production workloads, large data transfers |
-| **Hosted Connection** | 50 Mbps - 10 Gbps | 1-2 weeks | Smaller workloads, PoC, cost-sensitive scenarios |
+| Type                     | Bandwidth Options         | Lead Time | Use Case                                         |
+| ------------------------ | ------------------------- | --------- | ------------------------------------------------ |
+| **Dedicated Connection** | 1 Gbps, 10 Gbps, 100 Gbps | 2-4 weeks | Production workloads, large data transfers       |
+| **Hosted Connection**    | 50 Mbps - 10 Gbps         | 1-2 weeks | Smaller workloads, PoC, cost-sensitive scenarios |
 
 #### **Virtual Interfaces (VIFs)**
 
@@ -563,11 +594,11 @@ On-Premises
 
 #### **VPN Connection Components**
 
-| Component | Mô tả |
-|-----------|-------|
-| **Virtual Private Gateway (VGW)** | AWS-side VPN endpoint, attach vào VPC |
-| **Customer Gateway (CGW)** | On-premises VPN device (physical hoặc software) |
-| **VPN Tunnel** | IPsec encrypted tunnel, mỗi VPN connection có 2 tunnels (HA) |
+| Component                         | Mô tả                                                        |
+| --------------------------------- | ------------------------------------------------------------ |
+| **Virtual Private Gateway (VGW)** | AWS-side VPN endpoint, attach vào VPC                        |
+| **Customer Gateway (CGW)**        | On-premises VPN device (physical hoặc software)              |
+| **VPN Tunnel**                    | IPsec encrypted tunnel, mỗi VPN connection có 2 tunnels (HA) |
 
 #### **VPN Tunnel Redundancy**
 
@@ -583,12 +614,12 @@ Customer Gateway (On-Prem)
 
 #### **VPN Performance**
 
-| Metric | Value |
-|--------|-------|
-| **Bandwidth** | Up to 1.25 Gbps per tunnel |
+| Metric                  | Value                                       |
+| ----------------------- | ------------------------------------------- |
+| **Bandwidth**           | Up to 1.25 Gbps per tunnel                  |
 | **Aggregate Bandwidth** | Up to 2.5 Gbps (sử dụng ECMP với 2 tunnels) |
-| **Latency** | Cao hơn Direct Connect (qua Internet) |
-| **MTU** | 1400 bytes (do IPsec overhead) |
+| **Latency**             | Cao hơn Direct Connect (qua Internet)       |
+| **MTU**                 | 1400 bytes (do IPsec overhead)              |
 
 #### **Accelerated Site-to-Site VPN**
 
@@ -604,14 +635,15 @@ Sử dụng **AWS Global Accelerator** để cải thiện performance:
 
 #### **Gateway Endpoints (S3 & DynamoDB)**
 
-| Đặc điểm | Chi tiết |
-|----------|----------|
-| **Supported Services** | S3, DynamoDB only |
-| **Routing** | Sử dụng prefix lists trong route tables |
-| **Pricing** | **Miễn phí** |
-| **Availability** | Regional service, tự động highly available |
+| Đặc điểm               | Chi tiết                                   |
+| ---------------------- | ------------------------------------------ |
+| **Supported Services** | S3, DynamoDB only                          |
+| **Routing**            | Sử dụng prefix lists trong route tables    |
+| **Pricing**            | **Miễn phí**                               |
+| **Availability**       | Regional service, tự động highly available |
 
 **Example Route Table Entry:**
+
 ```
 Destination         Target
 10.0.0.0/16         local
@@ -621,15 +653,17 @@ pl-xxxxxx (S3)      vpce-xxxxx  ← Gateway Endpoint
 
 #### **Interface Endpoints (PrivateLink)**
 
-| Đặc điểm | Chi tiết |
-|----------|----------|
+| Đặc điểm               | Chi tiết                                                      |
+| ---------------------- | ------------------------------------------------------------- |
 | **Supported Services** | 100+ AWS services (EC2, SNS, SQS, KMS, etc.) + 3rd party SaaS |
-| **Implementation** | Elastic Network Interface (ENI) với private IP trong subnet |
-| **DNS** | Private DNS tự động resolve đến ENI IP |
-| **Pricing** | $0.01/hour + $0.01/GB data processed |
-| **Availability** | Deploy trong multiple AZs cho HA |
+| **Implementation**     | Elastic Network Interface (ENI) với private IP trong subnet   |
+| **DNS**                | Private DNS tự động resolve đến ENI IP                        |
+| **Pricing**            | $0.01/hour + $0.01/GB data processed                          |
+| **Availability**       | Deploy trong multiple AZs cho HA                              |
 
 **Use Case - Accessing S3 from Private Subnet without NAT:**
+
+> **Mục đích sơ đồ:** Minh họa cách một Gateway Endpoint (cho S3) cung cấp tuyến đường kết nối trực tiếp từ Private Subnet tới S3 qua mạng nội bộ AWS, giúp bảo mật hơn mà không cần qua NAT Gateway hay mạng Internet.
 
 ```mermaid
 graph LR
@@ -637,15 +671,15 @@ graph LR
         subgraph PrivateSubnet["Private Subnet"]
             EC2[EC2 Instance<br/>10.0.1.10]
         end
-        
+
         VPCE[VPC Endpoint<br/>Interface ENI<br/>10.0.1.50]
     end
-    
+
     S3[Amazon S3<br/>Service]
-    
+
     EC2 -->|s3.amazonaws.com<br/>resolves to 10.0.1.50| VPCE
     VPCE -->|Private AWS Network| S3
-    
+
     style VPCE fill:#f39c12
 ```
 
@@ -665,31 +699,31 @@ graph TB
         NLB[Network Load Balancer]
         App1[Application Server 1]
         App2[Application Server 2]
-        
+
         VPCS[VPC Endpoint Service<br/>com.amazonaws.vpce.region.vpce-svc-xxxxx]
-        
+
         App1 --> NLB
         App2 --> NLB
         NLB --> VPCS
     end
-    
+
     subgraph Consumer1["Consumer VPC 1"]
         VPCE1[VPC Endpoint<br/>10.1.1.50]
         EC2_C1[EC2 Instance]
-        
+
         EC2_C1 --> VPCE1
     end
-    
+
     subgraph Consumer2["Consumer VPC 2"]
         VPCE2[VPC Endpoint<br/>10.2.1.50]
         EC2_C2[EC2 Instance]
-        
+
         EC2_C2 --> VPCE2
     end
-    
+
     VPCE1 -.->|Private Connection| VPCS
     VPCE2 -.->|Private Connection| VPCS
-    
+
     style VPCS fill:#e74c3c
     style VPCE1 fill:#3498db
     style VPCE2 fill:#3498db
@@ -711,6 +745,7 @@ graph TB
 #### **Business Context**
 
 Công ty A sáp nhập với công ty B. Cả 2 đều có AWS footprint:
+
 - Company A: 3 VPCs (Production, Staging, Development)
 - Company B: 2 VPCs (Production, Analytics)
 - Kết nối hiện tại: 10 VPC Peering connections + 3 Site-to-Site VPNs
@@ -752,12 +787,12 @@ Phase 4: Remove VPC Peering
 
 #### **Results**
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Connections** | 10 peerings + 3 VPNs | 5 VPC attachments + 1 VPN | 62% reduction |
-| **Routing Entries** | 50+ routes distributed | 10 routes centralized | 80% reduction |
-| **Mean Time to Resolve** | 2 hours | 20 minutes | 83% faster |
-| **Operational Cost** | 3 FTE engineers | 1 FTE engineer | 67% savings |
+| Metric                   | Before                 | After                     | Improvement   |
+| ------------------------ | ---------------------- | ------------------------- | ------------- |
+| **Connections**          | 10 peerings + 3 VPNs   | 5 VPC attachments + 1 VPN | 62% reduction |
+| **Routing Entries**      | 50+ routes distributed | 10 routes centralized     | 80% reduction |
+| **Mean Time to Resolve** | 2 hours                | 20 minutes                | 83% faster    |
+| **Operational Cost**     | 3 FTE engineers        | 1 FTE engineer            | 67% savings   |
 
 #### **Infrastructure as Code (Terraform)**
 
@@ -767,7 +802,7 @@ resource "aws_ec2_transit_gateway" "main" {
   description                     = "Merged Company Hub TGW"
   default_route_table_association = "disable"
   default_route_table_propagation = "disable"
-  
+
   tags = {
     Name = "hub-tgw-merged-company"
   }
@@ -776,7 +811,7 @@ resource "aws_ec2_transit_gateway" "main" {
 # Production Route Table
 resource "aws_ec2_transit_gateway_route_table" "production" {
   transit_gateway_id = aws_ec2_transit_gateway.main.id
-  
+
   tags = {
     Name = "production-rt"
     Environment = "production"
@@ -788,10 +823,10 @@ resource "aws_ec2_transit_gateway_vpc_attachment" "vpc_a_prod" {
   subnet_ids         = [aws_subnet.vpc_a_prod_subnet.id]
   transit_gateway_id = aws_ec2_transit_gateway.main.id
   vpc_id             = aws_vpc.vpc_a_production.id
-  
+
   transit_gateway_default_route_table_association = false
   transit_gateway_default_route_table_propagation = false
-  
+
   tags = {
     Name = "vpc-a-production-attachment"
   }
@@ -808,9 +843,9 @@ resource "aws_vpn_connection" "on_prem" {
   customer_gateway_id = aws_customer_gateway.main.id
   transit_gateway_id  = aws_ec2_transit_gateway.main.id
   type                = "ipsec.1"
-  
+
   static_routes_only = false  # Enable BGP
-  
+
   tags = {
     Name = "on-prem-vpn-consolidated"
   }
@@ -824,41 +859,44 @@ resource "aws_vpn_connection" "on_prem" {
 #### **Business Context**
 
 Startup xây dựng nền tảng telemedicine (khám bệnh từ xa) phải tuân thủ:
+
 - **HIPAA compliance**: Protected Health Information (PHI) không được traverse Internet
 - **Data residency**: Patient data phải lưu trong US Region
 - **Audit trail**: Log tất cả network traffic flows
 
 #### **Solution Architecture - Zero Trust Network**
 
+> **Mục đích sơ đồ:** Minh họa kiến trúc Zero Trust Endpoint, ngăn chặn hoàn toàn kết nối từ qua public internet bằng việc sử dụng Client VPN đi riêng lẻ tới Private Subnets nhằm bảo vệ dữ liệu siêu nhạy cảm.
+
 ```mermaid
 graph TB
     subgraph Patient["Patient Device"]
         Browser[Web Browser]
     end
-    
+
     subgraph AWS["AWS us-east-1"]
         subgraph PublicSubnet["Public Subnet"]
             CloudFront[CloudFront Distribution<br/>+ AWS WAF]
             ALB[Application Load Balancer<br/>+ SSL Termination]
         end
-        
+
         subgraph PrivateSubnet1["Private Subnet - App Tier"]
             ECS[ECS Fargate<br/>Application Containers]
         end
-        
+
         subgraph PrivateSubnet2["Private Subnet - Data Tier"]
             RDS[(RDS PostgreSQL<br/>Encrypted at Rest)]
         end
-        
+
         subgraph IsolatedSubnet["Isolated Subnet"]
             VPCE_S3[S3 VPC Endpoint<br/>Gateway]
             VPCE_Secrets[Secrets Manager<br/>Interface Endpoint]
         end
-        
+
         S3[S3 Bucket<br/>Medical Records<br/>SSE-KMS Encrypted]
         Secrets[AWS Secrets Manager<br/>DB Credentials]
     end
-    
+
     Browser -->|HTTPS Only| CloudFront
     CloudFront -->|AWS Shield<br/>DDoS Protection| ALB
     ALB -->|Private IP| ECS
@@ -867,7 +905,7 @@ graph TB
     VPCE_S3 -.->|Private Network| S3
     ECS -->|Fetch Credentials| VPCE_Secrets
     VPCE_Secrets -.->|Private Network| Secrets
-    
+
     style RDS fill:#e74c3c
     style S3 fill:#e74c3c
     style VPCE_S3 fill:#f39c12
@@ -936,12 +974,12 @@ healthcare-platform/
 resource "aws_vpc_endpoint" "s3" {
   vpc_id       = aws_vpc.main.id
   service_name = "com.amazonaws.us-east-1.s3"
-  
+
   route_table_ids = [
     aws_route_table.private_subnet_rt.id,
     aws_route_table.isolated_subnet_rt.id
   ]
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -956,7 +994,7 @@ resource "aws_vpc_endpoint" "s3" {
       }
     ]
   })
-  
+
   tags = {
     Name = "s3-gateway-endpoint-hipaa"
   }
@@ -965,7 +1003,7 @@ resource "aws_vpc_endpoint" "s3" {
 # S3 Bucket Policy - Enforce VPC Endpoint + HTTPS
 resource "aws_s3_bucket_policy" "medical_records_policy" {
   bucket = aws_s3_bucket.medical_records.id
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -1018,34 +1056,36 @@ Enterprise migrating **500 TB** on-premises Oracle database đến AWS Aurora Po
 
 #### **Solution Architecture**
 
+> **Mục đích sơ đồ:** Biểu diễn giải pháp chuyển đổi và đồng bộ lượng dữ liệu lớn từ trung tâm dữ liệu cục bộ (On-premises) lên Cloud. Sử dụng kết hợp AWS Direct Connect (để có đường truyền băng thông lớn ổn định) nối đến VPC, sau đó chạy AWS DMS (Database Migration Service) để sao chép vào Amazon Aurora liên tục.
+
 ```mermaid
 graph LR
     subgraph OnPrem["On-Premises Data Center"]
         Oracle[(Oracle Database<br/>500 TB)]
         DMS_Replication[DMS Replication Instance<br/>On-Prem Agent]
     end
-    
+
     subgraph DXLocation["Direct Connect Location"]
         DXRouter[AWS DX Router<br/>10 Gbps]
     end
-    
+
     subgraph AWS["AWS us-west-2"]
         subgraph VPC["VPC 10.0.0.0/16"]
             VGW[Virtual Private Gateway]
-            
+
             subgraph PrivateSubnet["Private Subnet"]
                 DMS_AWS[AWS DMS<br/>Replication Instance<br/>dms.c5.4xlarge]
                 Aurora[(Aurora PostgreSQL<br/>Target Database)]
             end
         end
     end
-    
+
     Oracle -->|Full Load<br/>+ CDC| DMS_Replication
     DMS_Replication -->|Encrypted Tunnel| DXRouter
     DXRouter -->|Private VIF<br/>BGP Routing| VGW
     VGW --> DMS_AWS
     DMS_AWS -->|Continuous Replication| Aurora
-    
+
     style Oracle fill:#ff6b6b
     style Aurora fill:#51cf66
     style DXRouter fill:#f39c12
@@ -1088,13 +1128,13 @@ resource "aws_dms_replication_instance" "migration" {
   replication_instance_id   = "oracle-to-aurora-migration"
   replication_instance_class = "dms.c5.4xlarge"  # 16 vCPU, 32 GB RAM
   allocated_storage         = 1000  # 1 TB for caching
-  
+
   vpc_security_group_ids = [aws_security_group.dms_sg.id]
   replication_subnet_group_id = aws_dms_replication_subnet_group.main.id
-  
+
   publicly_accessible = false
   multi_az            = true  # HA setup
-  
+
   tags = {
     Name = "oracle-aurora-migration"
   }
@@ -1105,15 +1145,15 @@ resource "aws_dms_endpoint" "oracle_source" {
   endpoint_id   = "oracle-source"
   endpoint_type = "source"
   engine_name   = "oracle"
-  
+
   server_name = "oracle.onprem.company.internal"
   port        = 1521
   database_name = "PRODDB"
   username      = "dms_user"
   password      = var.oracle_password
-  
+
   extra_connection_attributes = "useLogminerReader=N;useBfile=Y"
-  
+
   ssl_mode = "require"
 }
 
@@ -1122,13 +1162,13 @@ resource "aws_dms_endpoint" "aurora_target" {
   endpoint_id   = "aurora-target"
   endpoint_type = "target"
   engine_name   = "aurora-postgresql"
-  
+
   server_name = aws_rds_cluster.aurora.endpoint
   port        = 5432
   database_name = "migrateddb"
   username      = "postgres"
   password      = var.aurora_password
-  
+
   ssl_mode = "require"
 }
 
@@ -1140,7 +1180,7 @@ resource "aws_dms_replication_task" "migration_task" {
   source_endpoint_arn      = aws_dms_endpoint.oracle_source.endpoint_arn
   target_endpoint_arn      = aws_dms_endpoint.aurora_target.endpoint_arn
   table_mappings           = file("table_mappings.json")
-  
+
   replication_task_settings = jsonencode({
     TargetMetadata = {
       SupportLobs = true
@@ -1210,13 +1250,13 @@ iperf3 -c <aurora-private-ip> -t 300 -P 8  # 8 parallel streams, 5 min test
 
 #### **Cost Analysis**
 
-| Component | Cost | Duration | Total |
-|-----------|------|----------|-------|
-| Direct Connect 10 Gbps | $2,190/month | 1 month | $2,190 |
-| DMS c5.4xlarge (Multi-AZ) | $1.632/hour x 2 | 168 hours (7 days) | $548 |
-| Data Transfer Out (DX) | $0.02/GB | 500 TB | $10,240 |
-| Aurora Storage | $0.10/GB | 500 GB (first month) | $50 |
-| **Total Migration Cost** | | | **$13,028** |
+| Component                 | Cost            | Duration             | Total       |
+| ------------------------- | --------------- | -------------------- | ----------- |
+| Direct Connect 10 Gbps    | $2,190/month    | 1 month              | $2,190      |
+| DMS c5.4xlarge (Multi-AZ) | $1.632/hour x 2 | 168 hours (7 days)   | $548        |
+| Data Transfer Out (DX)    | $0.02/GB        | 500 TB               | $10,240     |
+| Aurora Storage            | $0.10/GB        | 500 GB (first month) | $50         |
+| **Total Migration Cost**  |                 |                      | **$13,028** |
 
 > **Alternative (Internet-based)**: Snowball Edge (100 TB x 5 devices) = $1,500 + shipping + 2 weeks delay. Direct Connect = faster, more secure, lower risk.
 
@@ -1233,6 +1273,7 @@ iperf3 -c <aurora-private-ip> -t 300 -P 8  # 8 parallel streams, 5 min test
 ✅ **Reality**: VPC Peering is **NON-TRANSITIVE**. Cần tạo peering trực tiếp A ↔ C.
 
 **Exam Question Example:**
+
 > You have 3 VPCs: VPC-A (10.0.0.0/16), VPC-B (10.1.0.0/16), VPC-C (10.2.0.0/16). VPC-A peers with VPC-B, VPC-B peers with VPC-C. An EC2 instance in VPC-A (10.0.1.10) cannot ping an EC2 instance in VPC-C (10.2.1.10). What is the issue?
 
 **Answer:** VPC Peering does not support transitive routing. Create a direct peering connection between VPC-A and VPC-C.
@@ -1244,10 +1285,12 @@ iperf3 -c <aurora-private-ip> -t 300 -P 8  # 8 parallel streams, 5 min test
 ❌ **Incorrect**: "VPN is always slower than Direct Connect"
 
 ✅ **Nuance**:
+
 - **Site-to-Site VPN**: Up to **1.25 Gbps per tunnel**, **2.5 Gbps aggregate** (ECMP)
 - **Direct Connect**: Dedicated bandwidth (1/10/100 Gbps), nhưng cần **LAG** để exceed single connection limit
 
 **Exam Question Example:**
+
 > A company needs 5 Gbps bandwidth from on-premises to AWS with encryption. Which option is MOST cost-effective?
 
 **Correct Answer:** Use **Direct Connect 10 Gbps + MACsec encryption** OR **2x Direct Connect 10 Gbps in LAG** (không phải VPN vì VPN max 2.5 Gbps).
@@ -1259,10 +1302,12 @@ iperf3 -c <aurora-private-ip> -t 300 -P 8  # 8 parallel streams, 5 min test
 ❌ **Confusion**: "Tất cả AWS services đều dùng Gateway Endpoint"
 
 ✅ **Reality**:
+
 - **Gateway Endpoints**: Chỉ S3 và DynamoDB
 - **Interface Endpoints (PrivateLink)**: Tất cả services khác (EC2, SNS, SQS, Lambda, v.v.)
 
 **Exam Question Example:**
+
 > You want to access Amazon SQS from a private subnet without Internet Gateway. What should you create?
 
 **Answer:** Create an **Interface VPC Endpoint** for SQS (not Gateway Endpoint).
@@ -1273,11 +1318,13 @@ iperf3 -c <aurora-private-ip> -t 300 -P 8  # 8 parallel streams, 5 min test
 
 ❌ **Assumption**: "Bật route propagation là đủ, không cần configure thêm gì"
 
-✅ **Reality**: 
+✅ **Reality**:
+
 - Route propagation chỉ **tự động thêm routes từ VGW/TGW vào route table**
 - Vẫn cần **manually configure route table associations** cho mỗi VPC attachment
 
 **Exam Question Example:**
+
 > After attaching 5 VPCs to Transit Gateway and enabling route propagation, VPCs still cannot communicate. What is missing?
 
 **Answer:** Associate each VPC attachment with the Transit Gateway route table and ensure propagation is enabled **in both directions**.
@@ -1288,11 +1335,11 @@ iperf3 -c <aurora-private-ip> -t 300 -P 8  # 8 parallel streams, 5 min test
 
 #### **1. VPC Peering Data Transfer Pricing**
 
-| Scenario | Price |
-|----------|-------|
-| **Same AZ** | **$0.00/GB** (FREE) |
+| Scenario                   | Price                     |
+| -------------------------- | ------------------------- |
+| **Same AZ**                | **$0.00/GB** (FREE)       |
 | **Cross-AZ (same Region)** | $0.01/GB (each direction) |
-| **Cross-Region** | $0.02/GB (each direction) |
+| **Cross-Region**           | $0.02/GB (each direction) |
 
 > **Pro Tip**: Deploy tightly-coupled applications trong cùng AZ để tránh data transfer charges, nhưng cân nhắc trade-off với high availability.
 
@@ -1311,10 +1358,10 @@ Data Processing:
 
 **Cost Comparison (10 VPCs, 1 TB/month traffic):**
 
-| Option | Connections | Hourly Cost | Data Transfer | Monthly Total |
-|--------|-------------|-------------|---------------|---------------|
-| **VPC Peering** | 45 peering | $0 | $10 (cross-AZ) | ~$10 |
-| **Transit Gateway** | 10 attachments | $36 + $36 = $72 | $20 (processed) | ~$92 |
+| Option              | Connections    | Hourly Cost     | Data Transfer   | Monthly Total |
+| ------------------- | -------------- | --------------- | --------------- | ------------- |
+| **VPC Peering**     | 45 peering     | $0              | $10 (cross-AZ)  | ~$10          |
+| **Transit Gateway** | 10 attachments | $36 + $36 = $72 | $20 (processed) | ~$92          |
 
 > **When to use Transit Gateway**: Khi số lượng VPCs > 5 hoặc cần centralized management. Với < 5 VPCs và ít traffic, VPC Peering rẻ hơn.
 
@@ -1324,13 +1371,14 @@ Data Processing:
 
 **Scenario**: 1 TB/month data transfer, 24/7 connection
 
-| Option | Setup Cost | Monthly Recurring | Data Transfer | Total/Month |
-|--------|-----------|-------------------|---------------|-------------|
-| **Site-to-Site VPN** | $0 | $0.05/hour x 2 tunnels = $73 | $0.09/GB = $90 | **$163** |
-| **Direct Connect 1 Gbps** | $0 (hosted) | $0.30/hour = $219 | $0.02/GB = $20 | **$239** |
-| **Direct Connect 10 Gbps** | $1,000 (LoA fee) | $2,190/month (port hour) | $0.02/GB = $20 | **$2,210** |
+| Option                     | Setup Cost       | Monthly Recurring            | Data Transfer  | Total/Month |
+| -------------------------- | ---------------- | ---------------------------- | -------------- | ----------- |
+| **Site-to-Site VPN**       | $0               | $0.05/hour x 2 tunnels = $73 | $0.09/GB = $90 | **$163**    |
+| **Direct Connect 1 Gbps**  | $0 (hosted)      | $0.30/hour = $219            | $0.02/GB = $20 | **$239**    |
+| **Direct Connect 10 Gbps** | $1,000 (LoA fee) | $2,190/month (port hour)     | $0.02/GB = $20 | **$2,210**  |
 
-> **Pro Tip**: 
+> **Pro Tip**:
+>
 > - < 50 GB/month: Sử dụng VPN
 > - 50 GB - 10 TB/month: Direct Connect 1 Gbps (hosted connection)
 > - > 10 TB/month hoặc cần low latency: Direct Connect 10 Gbps
@@ -1374,13 +1422,8 @@ DB Tier SG:
     {
       "Effect": "Allow",
       "Principal": "*",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject"
-      ],
-      "Resource": [
-        "arn:aws:s3:::my-production-bucket/*"
-      ],
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": ["arn:aws:s3:::my-production-bucket/*"],
       "Condition": {
         "StringEquals": {
           "aws:PrincipalOrgID": "o-xxxxxxxxxx"
@@ -1409,6 +1452,7 @@ aws directconnect associate-mac-sec-key \
 ```
 
 **Benefits:**
+
 - Layer 2 encryption (faster than IPsec)
 - Encrypts từ customer router đến AWS router
 - No performance impact (line-rate encryption)
@@ -1421,12 +1465,12 @@ aws directconnect associate-mac-sec-key \
 
 #### **1. Transit Gateway Maximum Bandwidth**
 
-| Connection Type | Bandwidth per Attachment |
-|-----------------|--------------------------|
-| **VPC Attachment** | **50 Gbps** (burst to 100 Gbps) |
-| **VPN Attachment** | 5 Gbps (ECMP across multiple tunnels) |
-| **Direct Connect (Transit VIF)** | 50 Gbps |
-| **Peering Attachment** | 50 Gbps |
+| Connection Type                  | Bandwidth per Attachment              |
+| -------------------------------- | ------------------------------------- |
+| **VPC Attachment**               | **50 Gbps** (burst to 100 Gbps)       |
+| **VPN Attachment**               | 5 Gbps (ECMP across multiple tunnels) |
+| **Direct Connect (Transit VIF)** | 50 Gbps                               |
+| **Peering Attachment**           | 50 Gbps                               |
 
 > **Scaling Tip**: Nếu cần > 50 Gbps giữa 2 VPCs, sử dụng **multiple Transit Gateways với peering** hoặc **Direct VPC Peering**.
 
@@ -1448,11 +1492,13 @@ aws directconnect create-lag \
 ```
 
 **Benefits:**
+
 - **Aggregate bandwidth**: 40 Gbps (4 x 10 Gbps)
 - **Active-Active**: Tất cả connections đều active (không phải active/standby)
 - **Automatic Failover**: Nếu 1 connection fail, traffic redistribute sang 3 connections còn lại
 
 **Requirements:**
+
 - Tất cả connections phải **cùng bandwidth**
 - Phải terminate tại **cùng Direct Connect location**
 - Maximum **4 connections** per LAG
@@ -1461,11 +1507,11 @@ aws directconnect create-lag \
 
 #### **3. VPC Flow Logs Performance Impact**
 
-| Setting | Performance Impact | Cost |
-|---------|-------------------|------|
-| **All traffic** | ~0.5% CPU overhead | $0.50/GB ingested |
+| Setting                   | Performance Impact  | Cost                        |
+| ------------------------- | ------------------- | --------------------------- |
+| **All traffic**           | ~0.5% CPU overhead  | $0.50/GB ingested           |
 | **Rejected traffic only** | < 0.1% CPU overhead | ~$0.05/GB (10x less volume) |
-| **No Flow Logs** | 0% | $0 |
+| **No Flow Logs**          | 0%                  | $0                          |
 
 > **Best Practice**: Enable Flow Logs cho **rejected traffic only** trong production để troubleshooting mà không impact performance. Chỉ enable **all traffic** khi cần deep analysis.
 
@@ -1490,39 +1536,41 @@ aws directconnect create-lag \
 
 #### **Regional Failover Architecture**
 
+> **Mục đích sơ đồ:** Minh họa giải pháp cân bằng tải và chịu lỗi liên vùng (Cross-Region). Dựa trên Global Accelerator để tự động phân luồng (Routing) người dùng đến Region gần nhất hoặc chuyển hướng tất cả lưu lượng sang Region phụ nếu Region chính sập (Disaster Recovery).
+
 ```mermaid
 graph TB
     Users[Global Users]
-    
+
     subgraph DNS["Route 53"]
         HealthCheck1[Health Check<br/>us-east-1]
         HealthCheck2[Health Check<br/>eu-west-1]
     end
-    
+
     subgraph Primary["Primary: us-east-1"]
         ALB1[Application Load Balancer]
         App1[Application Tier]
         DB1[(RDS Primary)]
     end
-    
+
     subgraph Secondary["Secondary: eu-west-1"]
         ALB2[Application Load Balancer]
         App2[Application Tier]
         DB2[(RDS Read Replica)]
     end
-    
+
     Users --> DNS
     DNS -->|Primary| ALB1
     DNS -.->|Failover if Primary DOWN| ALB2
-    
+
     HealthCheck1 -->|Monitor| ALB1
     HealthCheck2 -->|Monitor| ALB2
-    
+
     ALB1 --> App1 --> DB1
     ALB2 --> App2 --> DB2
-    
+
     DB1 -.->|Async Replication| DB2
-    
+
     style Primary fill:#51cf66
     style Secondary fill:#ffd93d
 ```
@@ -1538,7 +1586,7 @@ resource "aws_route53_health_check" "primary" {
   resource_path     = "/health"
   failure_threshold = 3
   request_interval  = 30
-  
+
   tags = {
     Name = "primary-region-health-check"
   }
@@ -1549,18 +1597,18 @@ resource "aws_route53_record" "primary" {
   zone_id = aws_route53_zone.main.zone_id
   name    = "app.example.com"
   type    = "A"
-  
+
   set_identifier = "primary"
   failover_routing_policy {
     type = "PRIMARY"
   }
-  
+
   alias {
     name                   = aws_lb.alb_us_east_1.dns_name
     zone_id                = aws_lb.alb_us_east_1.zone_id
     evaluate_target_health = true
   }
-  
+
   health_check_id = aws_route53_health_check.primary.id
 }
 
@@ -1569,12 +1617,12 @@ resource "aws_route53_record" "secondary" {
   zone_id = aws_route53_zone.main.zone_id
   name    = "app.example.com"
   type    = "A"
-  
+
   set_identifier = "secondary"
   failover_routing_policy {
     type = "SECONDARY"
   }
-  
+
   alias {
     name                   = aws_lb.alb_eu_west_1.dns_name
     zone_id                = aws_lb.alb_eu_west_1.zone_id
@@ -1584,6 +1632,7 @@ resource "aws_route53_record" "secondary" {
 ```
 
 **RTO/RPO:**
+
 - **RTO (Recovery Time Objective)**: < 2 minutes (DNS TTL 60s + health check interval 30s)
 - **RPO (Recovery Point Objective)**: < 5 minutes (RDS async replication lag)
 
@@ -1593,35 +1642,36 @@ resource "aws_route53_record" "secondary" {
 
 #### **Keyword Recognition Table**
 
-| Keyword in Question | Think About |
-|---------------------|-------------|
-| "Private connectivity between VPCs" | VPC Peering hoặc Transit Gateway |
-| "Hundreds of VPCs" | Transit Gateway (không phải VPC Peering) |
-| "Transitive routing" | Transit Gateway (VPC Peering KHÔNG support) |
-| "On-premises to AWS, consistent performance" | Direct Connect (không phải VPN) |
-| "Quick setup, encrypted, over Internet" | Site-to-Site VPN |
-| "Access S3 without Internet Gateway" | S3 Gateway Endpoint hoặc S3 Interface Endpoint |
-| "Access AWS services privately" | VPC Endpoints (Gateway hoặc Interface) |
-| "Cross-Region, low latency, encrypted" | Inter-Region VPC Peering hoặc TGW Peering |
-| "Shared services to multiple accounts" | AWS PrivateLink (VPC Endpoint Services) |
-| "Central egress/ingress point" | Transit VPC hoặc Transit Gateway + NAT Gateway |
+| Keyword in Question                          | Think About                                    |
+| -------------------------------------------- | ---------------------------------------------- |
+| "Private connectivity between VPCs"          | VPC Peering hoặc Transit Gateway               |
+| "Hundreds of VPCs"                           | Transit Gateway (không phải VPC Peering)       |
+| "Transitive routing"                         | Transit Gateway (VPC Peering KHÔNG support)    |
+| "On-premises to AWS, consistent performance" | Direct Connect (không phải VPN)                |
+| "Quick setup, encrypted, over Internet"      | Site-to-Site VPN                               |
+| "Access S3 without Internet Gateway"         | S3 Gateway Endpoint hoặc S3 Interface Endpoint |
+| "Access AWS services privately"              | VPC Endpoints (Gateway hoặc Interface)         |
+| "Cross-Region, low latency, encrypted"       | Inter-Region VPC Peering hoặc TGW Peering      |
+| "Shared services to multiple accounts"       | AWS PrivateLink (VPC Endpoint Services)        |
+| "Central egress/ingress point"               | Transit VPC hoặc Transit Gateway + NAT Gateway |
 
 ---
 
 #### **Elimination Strategy**
 
 **Example Question:**
+
 > A company needs to connect 50 VPCs across 3 AWS Regions. Traffic between VPCs must be encrypted and not traverse the Internet. What is the MOST scalable solution?
 
 **Options:**
 A. VPC Peering between all VPCs  
 B. AWS Transit Gateway in each Region with Inter-Region Peering  
 C. AWS PrivateLink  
-D. Site-to-Site VPN mesh  
+D. Site-to-Site VPN mesh
 
 **Elimination Process:**
 
-1. ❌ **Option A**: 50 VPCs = 1,225 peering connections (50*49/2). Không scalable, operational nightmare.
+1. ❌ **Option A**: 50 VPCs = 1,225 peering connections (50\*49/2). Không scalable, operational nightmare.
 
 2. ✅ **Option B**: 3 Transit Gateways (1 per Region) + 3 peering connections. Scalable, encrypted, centralized management. **CORRECT ANSWER.**
 
@@ -1630,27 +1680,3 @@ D. Site-to-Site VPN mesh
 4. ❌ **Option D**: VPN is for on-prem to AWS, không phải VPC to VPC. Cũng không scalable.
 
 ---
-
-## Summary
-
-Tài liệu này đã hệ thống hóa **AWS Network Connectivity Options** từ tổng quan đến chi tiết, bao gồm:
-
-✅ **Core Concepts**: Multi-tier, Multi-VPC, High Availability, Hybrid Network  
-✅ **Visual Theory**: 5 Mermaid diagrams giải thích kiến trúc phức tạp  
-✅ **Deep Dive**: VPC Peering, Transit Gateway, Direct Connect, VPN, VPC Endpoints  
-✅ **Practical Scenarios**: Hub-and-Spoke migration, Privacy-by-Design healthcare, Real-time data migration  
-✅ **Exam Essentials**: Common traps, cost optimization, security best practices, HA checklist  
-
-**Recommended Study Path:**
-
-1. **Week 1**: Đọc Section 1-3 (Overview, Core Components, Visual Theory)
-2. **Week 2**: Hands-on Lab với VPC Peering và Transit Gateway
-3. **Week 3**: Deep dive Section 4 (Detailed technical specs)
-4. **Week 4**: Implement Scenario 1 hoặc 2 bằng Terraform
-5. **Week 5**: Review Exam Essentials, làm practice questions
-
-**Next Steps:**
-- Thực hành với AWS Free Tier: Tạo 3 VPCs, setup peering, sau đó migrate sang Transit Gateway
-- Đọc AWS Well-Architected Framework - Reliability Pillar
-- Tham khảo: AWS Certified Solutions Architect Official Study Guide Chapter 5-6
-

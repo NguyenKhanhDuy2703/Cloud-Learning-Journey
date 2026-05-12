@@ -1,0 +1,129 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 650" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8f9fa"/>
+      <stop offset="100%" stop-color="#e9ecef"/>
+    </linearGradient>
+    
+    <linearGradient id="layer3Grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e1f5fe"/>
+      <stop offset="100%" stop-color="#b3e5fc"/>
+    </linearGradient>
+
+    <linearGradient id="layer2Grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff3e0"/>
+      <stop offset="100%" stop-color="#ffe0b2"/>
+    </linearGradient>
+
+    <linearGradient id="layer1Grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f3e5f5"/>
+      <stop offset="100%" stop-color="#e1bee7"/>
+    </linearGradient>
+
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.1"/>
+    </filter>
+  </defs>
+
+  <rect width="100%" height="100%" fill="url(#bgGradient)" rx="10" ry="10"/>
+
+  <g font-family="Arial, sans-serif">
+    <!-- Title -->
+    <text x="450" y="50" font-size="28" font-weight="bold" fill="#333" text-anchor="middle">AWS Network Connectivity Layers</text>
+    <text x="450" y="80" font-size="16" fill="#666" text-anchor="middle">Core Components &amp; Architecture Patterns</text>
+
+    <!-- Layer 3: Hybrid Connectivity -->
+    <rect x="50" y="120" width="800" height="130" fill="url(#layer3Grad)" rx="8" filter="url(#shadow)"/>
+    <rect x="50" y="120" width="40" height="130" fill="#0277bd" rx="8"/>
+    <rect x="70" y="120" width="20" height="130" fill="#0277bd"/>
+    <text x="60" y="185" font-size="18" font-weight="bold" fill="#fff" transform="rotate(-90 60,185)" text-anchor="middle">Hybrid Connectivity</text>
+    
+    <g transform="translate(110, 140)">
+      <rect x="0" y="0" width="220" height="90" fill="#fff" rx="6" stroke="#0277bd" stroke-width="2"/>
+      <text x="110" y="30" font-size="16" font-weight="bold" fill="#0277bd" text-anchor="middle">AWS Direct Connect</text>
+      <text x="110" y="55" font-size="12" fill="#555" text-anchor="middle">Dedicated, private connection</text>
+      <text x="110" y="75" font-size="12" fill="#555" text-anchor="middle">High bandwidth, low latency</text>
+
+      <rect x="250" y="0" width="220" height="90" fill="#fff" rx="6" stroke="#0277bd" stroke-width="2"/>
+      <text x="360" y="30" font-size="16" font-weight="bold" fill="#0277bd" text-anchor="middle">AWS Site-to-Site VPN</text>
+      <text x="360" y="55" font-size="12" fill="#555" text-anchor="middle">IPsec over Internet</text>
+      <text x="360" y="75" font-size="12" fill="#555" text-anchor="middle">Encrypted tunnel</text>
+
+      <rect x="500" y="0" width="220" height="90" fill="#fff" rx="6" stroke="#0277bd" stroke-width="2" stroke-dasharray="4"/>
+      <text x="610" y="30" font-size="16" font-weight="bold" fill="#0277bd" text-anchor="middle">Hybrid Network</text>
+      <text x="610" y="55" font-size="12" fill="#555" text-anchor="middle">Cloud &lt;-&gt; On-Premises</text>
+      <text x="610" y="75" font-size="12" fill="#555" text-anchor="middle">Extension of datacenter</text>
+    </g>
+
+    <!-- Connectors L3 to L2 -->
+    <path d="M 220 250 L 220 280" stroke="#888" stroke-width="2" stroke-dasharray="4"/>
+    <path d="M 450 250 L 450 280" stroke="#888" stroke-width="2" stroke-dasharray="4"/>
+    <path d="M 680 250 L 680 280" stroke="#888" stroke-width="2" stroke-dasharray="4"/>
+
+    <!-- Layer 2: Inter-VPC & Services -->
+    <rect x="50" y="280" width="800" height="150" fill="url(#layer2Grad)" rx="8" filter="url(#shadow)"/>
+    <rect x="50" y="280" width="40" height="150" fill="#e65100" rx="8"/>
+    <rect x="70" y="280" width="20" height="150" fill="#e65100"/>
+    <text x="60" y="355" font-size="18" font-weight="bold" fill="#fff" transform="rotate(-90 60,355)" text-anchor="middle">Intra-Cloud (VPC/Services)</text>
+    
+    <g transform="translate(110, 305)">
+      <rect x="0" y="0" width="160" height="100" fill="#fff" rx="6" stroke="#e65100" stroke-width="2"/>
+      <text x="80" y="30" font-size="15" font-weight="bold" fill="#e65100" text-anchor="middle">Transit Gateway</text>
+      <text x="80" y="55" font-size="12" fill="#555" text-anchor="middle">Hub-and-spoke</text>
+      <text x="80" y="75" font-size="12" fill="#555" text-anchor="middle">Connects 1000s of VPCs</text>
+
+      <rect x="180" y="0" width="160" height="100" fill="#fff" rx="6" stroke="#e65100" stroke-width="2"/>
+      <text x="260" y="30" font-size="15" font-weight="bold" fill="#e65100" text-anchor="middle">VPC Peering</text>
+      <text x="260" y="55" font-size="12" fill="#555" text-anchor="middle">Point-to-point</text>
+      <text x="260" y="75" font-size="12" fill="#555" text-anchor="middle">Non-transitive routes</text>
+      
+      <rect x="360" y="0" width="160" height="100" fill="#fff" rx="6" stroke="#e65100" stroke-width="2"/>
+      <text x="440" y="30" font-size="15" font-weight="bold" fill="#e65100" text-anchor="middle">VPC Endpoints</text>
+      <text x="440" y="55" font-size="12" fill="#555" text-anchor="middle">Gateway / Interface</text>
+      <text x="440" y="75" font-size="12" fill="#555" text-anchor="middle">No Internet required</text>
+
+      <rect x="540" y="0" width="160" height="100" fill="#fff" rx="6" stroke="#e65100" stroke-width="2"/>
+      <text x="620" y="30" font-size="15" font-weight="bold" fill="#e65100" text-anchor="middle">AWS PrivateLink</text>
+      <text x="620" y="55" font-size="12" fill="#555" text-anchor="middle">Private access</text>
+      <text x="620" y="75" font-size="12" fill="#555" text-anchor="middle">SaaS &amp; AWS Services</text>
+    </g>
+
+    <!-- Connectors L2 to L1 -->
+    <path d="M 220 430 L 220 460" stroke="#888" stroke-width="2" stroke-dasharray="4"/>
+    <path d="M 450 430 L 450 460" stroke="#888" stroke-width="2" stroke-dasharray="4"/>
+    <path d="M 680 430 L 680 460" stroke="#888" stroke-width="2" stroke-dasharray="4"/>
+
+    <!-- Layer 1: Foundational -->
+    <rect x="50" y="460" width="800" height="130" fill="url(#layer1Grad)" rx="8" filter="url(#shadow)"/>
+    <rect x="50" y="460" width="40" height="130" fill="#6a1b9a" rx="8"/>
+    <rect x="70" y="460" width="20" height="130" fill="#6a1b9a"/>
+    <text x="60" y="525" font-size="18" font-weight="bold" fill="#fff" transform="rotate(-90 60,525)" text-anchor="middle">VPC Foundation</text>
+    
+    <g transform="translate(110, 480)">
+      <rect x="0" y="0" width="220" height="90" fill="#fff" rx="6" stroke="#6a1b9a" stroke-width="2"/>
+      <text x="110" y="30" font-size="16" font-weight="bold" fill="#6a1b9a" text-anchor="middle">Amazon VPC</text>
+      <text x="110" y="55" font-size="12" fill="#555" text-anchor="middle">Isolated logical network</text>
+      <text x="110" y="75" font-size="12" fill="#555" text-anchor="middle">Subnets, SG, NACL, Route Tables</text>
+
+      <rect x="250" y="0" width="220" height="90" fill="#fff" rx="6" stroke="#6a1b9a" stroke-width="2"/>
+      <text x="360" y="30" font-size="16" font-weight="bold" fill="#6a1b9a" text-anchor="middle">Multi-tier Architecture</text>
+      <text x="360" y="55" font-size="12" fill="#555" text-anchor="middle">Presentation, Logic, Data</text>
+      <text x="360" y="75" font-size="12" fill="#555" text-anchor="middle">Defense-in-depth isolation</text>
+
+      <rect x="500" y="0" width="220" height="90" fill="#fff" rx="6" stroke="#6a1b9a" stroke-width="2" stroke-dasharray="4"/>
+      <text x="610" y="30" font-size="16" font-weight="bold" fill="#6a1b9a" text-anchor="middle">High Availability (HA)</text>
+      <text x="610" y="55" font-size="12" fill="#555" text-anchor="middle">Eliminate SPOF</text>
+      <text x="610" y="75" font-size="12" fill="#555" text-anchor="middle">Multi-AZ deployments</text>
+    </g>
+
+    <!-- Extra Labels -->
+    <rect x="400" y="610" width="100" height="25" fill="#f8f9fa" rx="12" stroke="#ccc"/>
+    <circle cx="415" cy="622" r="5" fill="#0277bd"/>
+    <text x="425" y="627" font-size="12" fill="#555">Physical</text>
+
+    <rect x="520" y="610" width="100" height="25" fill="#f8f9fa" rx="12" stroke="#ccc" stroke-dasharray="4"/>
+    <circle cx="535" cy="622" r="5" fill="#e65100"/>
+    <text x="545" y="627" font-size="12" fill="#555">Logical / Design</text>
+
+  </g>
+</svg>
