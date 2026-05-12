@@ -1,0 +1,44 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="#f8f9fa"/>
+  
+  <!-- VPC -->
+  <rect x="50" y="50" width="700" height="500" fill="#ebf7f7" stroke="#3b48cc" stroke-width="2" rx="10"/>
+  <text x="70" y="80" font-family="Arial" font-size="20" fill="#3b48cc" font-weight="bold">Amazon VPC</text>
+
+  <!-- Subnet -->
+  <rect x="100" y="120" width="600" height="400" fill="#eaf3fb" stroke="#005b9f" stroke-width="2" rx="8"/>
+  <text x="120" y="150" font-family="Arial" font-size="18" fill="#005b9f" font-weight="bold">Subnet</text>
+
+  <!-- Network ACL -->
+  <rect x="130" y="180" width="540" height="320" fill="none" stroke="#cc2264" stroke-width="4" stroke-dasharray="10,5" rx="5"/>
+  <rect x="145" y="195" width="140" height="30" fill="#cc2264" rx="3"/>
+  <text x="160" y="215" font-family="Arial" font-size="14" fill="#fff" font-weight="bold">Network ACL</text>
+  <text x="295" y="215" font-family="Arial" font-size="14" fill="#cc2264" font-weight="bold">(Subnet-level Protection)</text>
+
+  <!-- Security Group -->
+  <rect x="250" y="270" width="300" height="200" fill="#fff5e6" stroke="#ff9900" stroke-width="4" stroke-dasharray="6,4" rx="8"/>
+  <rect x="265" y="285" width="140" height="30" fill="#ff9900" rx="3"/>
+  <text x="275" y="305" font-family="Arial" font-size="14" fill="#fff" font-weight="bold">Security Group</text>
+  <text x="415" y="305" font-family="Arial" font-size="14" fill="#ff9900" font-weight="bold">(ENI/Instance Level)</text>
+
+  <!-- EC2 Instance -->
+  <rect x="320" y="350" width="160" height="80" fill="#ed7100" stroke="#c05c00" stroke-width="2" rx="5"/>
+  <text x="350" y="395" font-family="Arial" font-size="18" fill="#fff" font-weight="bold">EC2 Instance</text>
+  
+  <!-- Traffic Arrows -->
+  <path d="M400 10 L400 110" stroke="#1d8102" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M400 130 L400 170" stroke="#1d8102" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M400 230 L400 260" stroke="#1d8102" stroke-width="4" marker-end="url(#arrow)"/>
+  <path d="M400 320 L400 340" stroke="#1d8102" stroke-width="4" marker-end="url(#arrow)"/>
+  
+  <text x="415" y="70" font-family="Arial" font-size="14" fill="#1d8102" font-weight="bold">Inbound Traffic</text>
+  
+  <!-- Arrow definition -->
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1d8102" />
+    </marker>
+  </defs>
+
+</svg>
