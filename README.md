@@ -21,6 +21,9 @@ Cloud-Learning-Journey/
 ├── 07_Analytics/                       # Phân tích dữ liệu (Athena, OpenSearch)
 ├── 08_Data_Engineering/                # Xử lý & Kỹ thuật dữ liệu (Glue, EMR, Redshift, Kinesis)
 ├── 09_AWS Customer Engagement/         # Các dịch vụ tương tác (Amazon Connect)
+├── 10_Cost_Optimization/               # Chiến lược tối ưu hóa chi phí AWS
+├── 11_Observability/                   # Giám sát và quan sát với CloudWatch
+├── 12_Cloud_Governance/                # Quản trị cloud, SCP, tagging và cost-aware governance
 └── Example/                            # Các thư mục code thực hành và dự án mẫu (Labs/Workspaces)
     └── my-workspace/
         ├── lab1-study/                 # Lab 1: Tích hợp Bedrock (Study Buddy)
@@ -60,23 +63,42 @@ Cloud-Learning-Journey/
 - **Databases:** Tổng quan về [các dịch vụ cơ sở dữ liệu](./05_Storage_Database/database_service.md).
 - Đi sâu vào thiết kế NoSQL với [DynamoDB](./05_Storage_Database/DynamoDB_DesignPatterns.md), GraphDB với [Neptune](./05_Storage_Database/Amazon_Neptun.md), và RDBMS với [Aurora](./05_Storage_Database/Amazon_Aurora_Getting_Started.md).
 
-### 6. Trí tuệ Nhân tạo - Generative AI (`06_Generative_AI`) 🚀
+### 6. Tối ưu hóa Chi phí AWS (`10_Cost_Optimization`)
+
+- **EBS Cost Optimization:** Giảm chi phí lưu trữ block bằng cách chọn loại volume, quản lý snapshots và sử dụng Elastic Volumes.
+- **S3 Cost Optimization:** Điều chỉnh lưu trữ, lifecycle policy và storage class để giảm chi phí dữ liệu đối tượng.
+- **EBS Performance Optimization:** Tối ưu hiệu năng và chi phí EBS thông qua chọn volume, IOPS/throughput và thiết kế RAID phù hợp.
+
+### 7. Trí tuệ Nhân tạo - Generative AI (`06_Generative_AI`) 🚀
 
 - Các khái niệm nền tảng AI/ML và làm quen với **Amazon Bedrock**.
 - Hiểu về Các mô hình nền tảng (Foundation Models).
 - Kỹ thuật **RAG** (Retrieval-Augmented Generation) & Knowledge Bases.
 - Thực hành xây dựng tác vụ thông minh với **Agents for Amazon Bedrock** và AI có trách nhiệm (Responsible AI).
 
-### 7. Phân tích Dữ liệu (`07_Analytics`)
+### 8. Phân tích Dữ liệu (`07_Analytics`)
 
 - Data Query & Analytics với **Amazon Athena**.
 - Giải pháp tìm kiếm nâng cao với **OpenSearch**.
 
-### 8. Kỹ thuật Dữ liệu - Data Engineering (`08_Data_Engineering`)
+### 9. Kỹ thuật Dữ liệu - Data Engineering (`08_Data_Engineering`)
 
 - Thu thập và lưu lượng dữ liệu: **Amazon Kinesis**.
 - ETL (Extract, Transform, Load): **AWS Glue**.
 - Xử lý dữ liệu lớn (Big Data): **Amazon EMR** & **Redshift**.
+
+### 10. Giám sát & Quan sát (`11_Observability`)
+
+- **Amazon CloudWatch:** [Getting Started](./11_Observability/Amazon_CloudWatch_Getting_Started.md) với logs, metrics, alarms và dashboard.
+- Kết hợp **Synthetics / RUM** với cảnh báo để phát hiện sự cố sớm.
+- Phân biệt giữa observability và monitoring.
+
+### 11. Cloud Governance (`12_Cloud_Governance`)
+
+- **Cloud Governance:** [Cân bằng Bảo mật và Chi phí](./12_Cloud_Governance/Cloud_Governance.md).
+- **AWS Organizations** và **SCP** để kiểm soát chính sách người dùng.
+- **Tag Policy** và **Cost Allocation Tags** để theo dõi chi phí chính xác.
+- **AWS Control Tower** và **AWS Config** cho governance tự động.
 
 ---
 
@@ -96,4 +118,4 @@ Kho code được đặt trong thư mục `Example/` bao gồm các kịch bản
 
 ---
 
-⚡ *Repository này được thiết kế và cập nhật liên tục song hành cùng quá trình học tập thực tế và chạy Lab trên AWS Cloud.*
+⚡ _Repository này được thiết kế và cập nhật liên tục song hành cùng quá trình học tập thực tế và chạy Lab trên AWS Cloud._

@@ -13,6 +13,7 @@
 ### Vấn đề thực tế cần giải quyết
 
 Khi một ứng dụng trên AWS đột ngột chậm hoặc mất kết nối, kỹ sư cần trả lời ngay các câu hỏi:
+
 - **Lưu lượng có đến được đích không?** → Reachability Analyzer
 - **Traffic thực tế đi qua đâu?** → VPC Flow Logs / Traffic Mirroring
 - **Có ngưỡng nào bị vi phạm không?** → CloudWatch Alarms
@@ -34,18 +35,18 @@ Nếu không có các công cụ này, việc gỡ lỗi sẽ phụ thuộc hoà
 
 ## 2. Core Components & Keywords
 
-| Từ khóa | Bản chất |
-|---|---|
-| **VPC Flow Logs** | Bản ghi metadata của mọi luồng IP đi vào/ra khỏi ENI, Subnet, hoặc VPC. Không capture payload. |
-| **Traffic Mirroring** | Sao chép toàn bộ gói tin (packet-level) từ ENI nguồn đến một target để phân tích sâu. |
-| **CloudWatch Metrics** | Dữ liệu định lượng theo thời gian (time-series) thu thập từ tài nguyên AWS. |
-| **CloudWatch Alarms** | Cơ chế kích hoạt hành động tự động khi metric vượt ngưỡng. |
-| **CloudWatch Logs Insights** | Công cụ query log với ngôn ngữ riêng để phân tích dữ liệu log quy mô lớn. |
-| **SSM Agent** | Agent cài trên EC2 cho phép AWS Systems Manager thực thi lệnh và thu thập metrics mà không cần SSH. |
-| **VPC Reachability Analyzer** | Công cụ phân tích tĩnh (static analysis) kiến trúc mạng — kiểm tra đường đi lý thuyết mà không gửi traffic thực. |
-| **Transit Gateway Network Manager** | Dashboard trung tâm quản lý và giám sát toàn bộ topology của Transit Gateway trên nhiều Region/Account. |
-| **ENI (Elastic Network Interface)** | Card mạng ảo — đơn vị cơ bản để đính kèm Flow Logs và Traffic Mirroring. |
-| **ACCEPT / REJECT** | Trạng thái trong Flow Log cho biết gói tin có được `Security Group` / `NACL` cho phép hay không. |
+| Từ khóa                             | Bản chất                                                                                                         |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| **VPC Flow Logs**                   | Bản ghi metadata của mọi luồng IP đi vào/ra khỏi ENI, Subnet, hoặc VPC. Không capture payload.                   |
+| **Traffic Mirroring**               | Sao chép toàn bộ gói tin (packet-level) từ ENI nguồn đến một target để phân tích sâu.                            |
+| **CloudWatch Metrics**              | Dữ liệu định lượng theo thời gian (time-series) thu thập từ tài nguyên AWS.                                      |
+| **CloudWatch Alarms**               | Cơ chế kích hoạt hành động tự động khi metric vượt ngưỡng.                                                       |
+| **CloudWatch Logs Insights**        | Công cụ query log với ngôn ngữ riêng để phân tích dữ liệu log quy mô lớn.                                        |
+| **SSM Agent**                       | Agent cài trên EC2 cho phép AWS Systems Manager thực thi lệnh và thu thập metrics mà không cần SSH.              |
+| **VPC Reachability Analyzer**       | Công cụ phân tích tĩnh (static analysis) kiến trúc mạng — kiểm tra đường đi lý thuyết mà không gửi traffic thực. |
+| **Transit Gateway Network Manager** | Dashboard trung tâm quản lý và giám sát toàn bộ topology của Transit Gateway trên nhiều Region/Account.          |
+| **ENI (Elastic Network Interface)** | Card mạng ảo — đơn vị cơ bản để đính kèm Flow Logs và Traffic Mirroring.                                         |
+| **ACCEPT / REJECT**                 | Trạng thái trong Flow Log cho biết gói tin có được `Security Group` / `NACL` cho phép hay không.                 |
 
 ---
 
@@ -88,6 +89,7 @@ graph TB
 ```
 
 **Giải thích sơ đồ:** Hệ thống giám sát mạng AWS được tổ chức theo **4 lớp từ thấp đến cao**:
+
 - **Layer 1** là nền tảng: CloudWatch thu thập metrics từ tài nguyên, SSM Agent đẩy các custom metrics từ bên trong EC2.
 - **Layer 2** xử lý khả năng quan sát traffic: Flow Logs ghi metadata và đẩy vào CloudWatch/S3, trong khi Traffic Mirroring sao chép gói tin đến target riêng để phân tích sâu.
 - **Layer 3** cho phép kiểm tra đường đi mạng mà không cần gửi traffic thực, rất hữu ích để gỡ lỗi cấu hình Security Group và NACL.
@@ -118,6 +120,7 @@ flowchart LR
 ```
 
 **Giải thích sơ đồ:**
+
 1. **Capture:** Flow Logs thu thập metadata (không phải nội dung gói tin) từ ENI, Subnet, hoặc toàn bộ VPC.
 2. **Destination:** Log có thể được gửi đến 3 đích: `CloudWatch Logs` (phân tích real-time), `S3` (lưu trữ dài hạn, chi phí thấp), hoặc `Kinesis Firehose` (stream đến SIEM bên thứ ba).
 3. **Analysis:** Tùy đích đến, dùng `Logs Insights` (query nhanh), `Athena` (SQL analytics quy mô lớn), hoặc OpenSearch (dashboard real-time).
@@ -143,6 +146,7 @@ sequenceDiagram
 ```
 
 **Giải thích sơ đồ:**
+
 1. Client gửi traffic đến EC2 production như bình thường — **không có interruption**.
 2. AWS tạo một **bản sao** (mirror) của mọi gói tin tại ENI nguồn.
 3. Gói tin được đóng gói bằng **VXLAN** (UDP port 4789) và gửi đến NLB hoặc ENI target.
@@ -156,24 +160,48 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Define: Người dùng định nghĩa\n(Source → Destination)
+    [*] --> Define
+    Define : Người dùng định nghĩa
+    Define : Source → Destination
 
-    Define --> Analyze: Trigger Analysis\n(API / Console)
+    Define --> Analyze
+    Analyze : Trigger Analysis
+    Analyze : API / Console
 
-    Analyze --> PathFound: Tìm thấy đường đi\n✅ REACHABLE
+    Analyze --> PathFound
+    PathFound : Tìm thấy đường đi
+    PathFound : ✅ REACHABLE
 
-    Analyze --> PathBlocked: Không tìm thấy\n❌ NOT REACHABLE
+    Analyze --> PathBlocked
+    PathBlocked : Không tìm thấy
+    PathBlocked : ❌ NOT REACHABLE
 
-    PathFound --> ExplainPath: Hiển thị hop-by-hop\npath chi tiết
+    PathFound --> ExplainPath
+    ExplainPath : Hiển thị hop-by-hop
+    ExplainPath : path chi tiết
 
-    PathBlocked --> IdentifyBlock: Xác định\nthành phần chặn
-    IdentifyBlock --> SG: Security Group\nRule bị thiếu?
-    IdentifyBlock --> NACL: NACL Rule\nbị block?
-    IdentifyBlock --> RT: Route Table\nthiếu route?
-    IdentifyBlock --> IGW: Internet Gateway\nchưa attach?
+    PathBlocked --> IdentifyBlock
+    IdentifyBlock : Xác định
+    IdentifyBlock : thành phần chặn
+
+    IdentifyBlock --> SG
+    SG : Security Group
+    SG : Rule bị thiếu?
+
+    IdentifyBlock --> NACL
+    NACL : NACL Rule
+    NACL : bị block?
+
+    IdentifyBlock --> RT
+    RT : Route Table
+    RT : thiếu route?
+
+    IdentifyBlock --> IGW
+    IGW : Internet Gateway
+    IGW : chưa attach?
 
     ExplainPath --> [*]
-    SG --> Fix: Sửa cấu hình
+    SG --> Fix
     NACL --> Fix
     RT --> Fix
     IGW --> Fix
@@ -181,6 +209,7 @@ stateDiagram-v2
 ```
 
 **Giải thích sơ đồ:**
+
 1. Người dùng định nghĩa **Source** (EC2, IGW, VPN, TGW) và **Destination** tương tự.
 2. Reachability Analyzer thực hiện **phân tích tĩnh** (không gửi traffic thực) trên toàn bộ cấu hình mạng.
 3. Nếu **REACHABLE**: hiển thị đường đi chi tiết từng hop.
@@ -236,13 +265,13 @@ graph TB
 
 CloudWatch tổ chức metrics theo **Namespace** → **Dimension** → **Metric Name**.
 
-| Namespace | Ví dụ Metrics | Ý nghĩa |
-|---|---|---|
-| `AWS/EC2` | `NetworkIn`, `NetworkOut` | Bytes in/out tại instance level |
-| `AWS/VPN` | `TunnelState`, `TunnelDataIn` | Trạng thái và throughput VPN tunnel |
-| `AWS/DX` | `ConnectionState`, `VirtualInterfaceBpsIngress` | Direct Connect metrics |
-| `AWS/TGW` | `BytesIn`, `PacketsIn`, `PacketDropCountBlackhole` | Transit Gateway traffic |
-| `CWAgent` (Custom) | `mem_used_percent`, `disk_used_percent` | Metrics từ SSM/CloudWatch Agent |
+| Namespace          | Ví dụ Metrics                                      | Ý nghĩa                             |
+| ------------------ | -------------------------------------------------- | ----------------------------------- |
+| `AWS/EC2`          | `NetworkIn`, `NetworkOut`                          | Bytes in/out tại instance level     |
+| `AWS/VPN`          | `TunnelState`, `TunnelDataIn`                      | Trạng thái và throughput VPN tunnel |
+| `AWS/DX`           | `ConnectionState`, `VirtualInterfaceBpsIngress`    | Direct Connect metrics              |
+| `AWS/TGW`          | `BytesIn`, `PacketsIn`, `PacketDropCountBlackhole` | Transit Gateway traffic             |
+| `CWAgent` (Custom) | `mem_used_percent`, `disk_used_percent`            | Metrics từ SSM/CloudWatch Agent     |
 
 #### 4.1.2 CloudWatch Agent & SSM Agent
 
@@ -277,14 +306,14 @@ fields srcAddr, dstAddr, action
 
 #### 4.1.5 CloudWatch Alarms
 
-| Thành phần | Mô tả |
-|---|---|
-| **Metric** | Nguồn dữ liệu (ví dụ: `NetworkPacketLoss`) |
-| **Threshold** | Ngưỡng kích hoạt (ví dụ: `> 5%` trong 5 phút) |
-| **Period** | Tần suất đánh giá (60s, 300s...) |
-| **Evaluation Periods** | Số lần liên tiếp vượt ngưỡng trước khi alarm |
-| **Actions** | SNS notify, Auto Scaling, EC2 action, Systems Manager OpsItem |
-| **States** | `OK`, `ALARM`, `INSUFFICIENT_DATA` |
+| Thành phần             | Mô tả                                                         |
+| ---------------------- | ------------------------------------------------------------- |
+| **Metric**             | Nguồn dữ liệu (ví dụ: `NetworkPacketLoss`)                    |
+| **Threshold**          | Ngưỡng kích hoạt (ví dụ: `> 5%` trong 5 phút)                 |
+| **Period**             | Tần suất đánh giá (60s, 300s...)                              |
+| **Evaluation Periods** | Số lần liên tiếp vượt ngưỡng trước khi alarm                  |
+| **Actions**            | SNS notify, Auto Scaling, EC2 action, Systems Manager OpsItem |
+| **States**             | `OK`, `ALARM`, `INSUFFICIENT_DATA`                            |
 
 > **Composite Alarms:** Kết hợp nhiều alarm bằng logic AND/OR để giảm alert fatigue — chỉ notify khi nhiều điều kiện đồng thời xảy ra.
 
@@ -298,21 +327,21 @@ fields srcAddr, dstAddr, action
 version account-id interface-id srcaddr dstaddr srcport dstport protocol packets bytes windowstart windowend action log-status
 ```
 
-| Field | Ví dụ | Ý nghĩa |
-|---|---|---|
-| `srcaddr` | `10.0.1.5` | IP nguồn |
-| `dstaddr` | `52.94.1.1` | IP đích |
-| `action` | `ACCEPT` / `REJECT` | Cho phép hay bị block bởi SG/NACL |
-| `log-status` | `OK` / `NODATA` / `SKIPDATA` | Trạng thái ghi log |
-| `protocol` | `6` (TCP), `17` (UDP) | Số hiệu giao thức IANA |
+| Field        | Ví dụ                        | Ý nghĩa                           |
+| ------------ | ---------------------------- | --------------------------------- |
+| `srcaddr`    | `10.0.1.5`                   | IP nguồn                          |
+| `dstaddr`    | `52.94.1.1`                  | IP đích                           |
+| `action`     | `ACCEPT` / `REJECT`          | Cho phép hay bị block bởi SG/NACL |
+| `log-status` | `OK` / `NODATA` / `SKIPDATA` | Trạng thái ghi log                |
+| `protocol`   | `6` (TCP), `17` (UDP)        | Số hiệu giao thức IANA            |
 
 #### 4.2.2 Phạm vi Capture
 
-| Cấp độ | Capture gì | Use case |
-|---|---|---|
-| **ENI level** | Traffic qua một network interface cụ thể | Debug một instance cụ thể |
-| **Subnet level** | Tất cả ENI trong subnet | Giám sát một tier (web/app/db) |
-| **VPC level** | Tất cả ENI trong toàn VPC | Giám sát tổng thể, compliance |
+| Cấp độ           | Capture gì                               | Use case                       |
+| ---------------- | ---------------------------------------- | ------------------------------ |
+| **ENI level**    | Traffic qua một network interface cụ thể | Debug một instance cụ thể      |
+| **Subnet level** | Tất cả ENI trong subnet                  | Giám sát một tier (web/app/db) |
+| **VPC level**    | Tất cả ENI trong toàn VPC                | Giám sát tổng thể, compliance  |
 
 #### 4.2.3 Những gì Flow Logs KHÔNG capture
 
@@ -327,12 +356,12 @@ version account-id interface-id srcaddr dstaddr srcport dstport protocol packets
 
 #### 4.3.1 Các thành phần cấu hình
 
-| Thành phần | Mô tả |
-|---|---|
-| **Mirror Source** | ENI của instance cần monitor (chỉ hỗ trợ Nitro-based instances) |
-| **Mirror Target** | ENI hoặc NLB nhận traffic được mirror |
-| **Mirror Filter** | Rules quyết định traffic nào được mirror (protocol, port, src/dst) |
-| **Mirror Session** | Kết nối Source → Target với Filter, có priority |
+| Thành phần         | Mô tả                                                              |
+| ------------------ | ------------------------------------------------------------------ |
+| **Mirror Source**  | ENI của instance cần monitor (chỉ hỗ trợ Nitro-based instances)    |
+| **Mirror Target**  | ENI hoặc NLB nhận traffic được mirror                              |
+| **Mirror Filter**  | Rules quyết định traffic nào được mirror (protocol, port, src/dst) |
+| **Mirror Session** | Kết nối Source → Target với Filter, có priority                    |
 
 #### 4.3.2 Encapsulation & Protocol
 
@@ -340,12 +369,12 @@ Traffic được đóng gói bằng **VXLAN (Virtual Extensible LAN)** trên **U
 
 #### 4.3.3 Open-Source Tools tích hợp
 
-| Tool | Mục đích | Tích hợp |
-|---|---|---|
-| **Zeek (formerly Bro)** | Network traffic analyzer, tạo logs cấu trúc | Nhận traffic từ Mirror Target ENI |
-| **Suricata** | IDS/IPS, phát hiện threat với rule sets | Chạy trên EC2 nhận mirror traffic |
-| **Wireshark** | Deep packet inspection thủ công | Analyze pcap files từ mirror session |
-| **tcpdump** | Capture và filter packets dòng lệnh | Debug nhanh trên instance |
+| Tool                    | Mục đích                                    | Tích hợp                             |
+| ----------------------- | ------------------------------------------- | ------------------------------------ |
+| **Zeek (formerly Bro)** | Network traffic analyzer, tạo logs cấu trúc | Nhận traffic từ Mirror Target ENI    |
+| **Suricata**            | IDS/IPS, phát hiện threat với rule sets     | Chạy trên EC2 nhận mirror traffic    |
+| **Wireshark**           | Deep packet inspection thủ công             | Analyze pcap files từ mirror session |
+| **tcpdump**             | Capture và filter packets dòng lệnh         | Debug nhanh trên instance            |
 
 ---
 
@@ -353,19 +382,20 @@ Traffic được đóng gói bằng **VXLAN (Virtual Extensible LAN)** trên **U
 
 #### 4.4.1 Nguồn và Đích hỗ trợ
 
-| Loại | Hỗ trợ làm Source/Destination |
-|---|---|
-| EC2 Instance | ✅ |
-| Internet Gateway | ✅ |
-| VPN Gateway | ✅ |
-| Transit Gateway | ✅ |
-| VPC Peering Connection | ✅ |
-| NAT Gateway | ✅ |
-| Network Load Balancer | ✅ |
+| Loại                   | Hỗ trợ làm Source/Destination |
+| ---------------------- | ----------------------------- |
+| EC2 Instance           | ✅                            |
+| Internet Gateway       | ✅                            |
+| VPN Gateway            | ✅                            |
+| Transit Gateway        | ✅                            |
+| VPC Peering Connection | ✅                            |
+| NAT Gateway            | ✅                            |
+| Network Load Balancer  | ✅                            |
 
 #### 4.4.2 Yếu tố được phân tích
 
 Reachability Analyzer kiểm tra các yếu tố sau theo thứ tự:
+
 - **Security Group rules** (inbound/outbound)
 - **Network ACL rules** (stateless, inbound/outbound)
 - **Route Tables** (có route đến đích chưa)
@@ -416,6 +446,7 @@ EC2 (Suspect) → VPC Flow Logs → CloudWatch Logs
 ```
 
 **Các bước thực hiện:**
+
 1. Bật **VPC Flow Logs** ở cấp VPC, gửi đến CloudWatch Logs.
 2. Tạo **Logs Insights query** lọc traffic `ACCEPT` đến IP ngoài VPC, sort theo `bytes desc`.
 3. Tạo **CloudWatch Alarm** trên custom metric `DataTransferOutAnomaly`.
@@ -502,32 +533,35 @@ resource "aws_ec2_traffic_mirror_session" "analysis" {
 
 ### 🎯 Các "bẫy" thường gặp trong kỳ thi
 
-| Tình huống | Câu trả lời SAI | Câu trả lời ĐÚNG |
-|---|---|---|
-| Cần phân tích **nội dung gói tin** để tìm malware | VPC Flow Logs | **Traffic Mirroring** |
-| Cần kiểm tra **lý do tại sao** EC2 không kết nối được đến RDS | Dùng ping/traceroute từ EC2 | **VPC Reachability Analyzer** (phân tích tĩnh, không cần traffic thực) |
-| Flow Log record có `REJECT` nhưng Security Group đã allow | Sai Security Group rule | **NACL bị block** (NACL là stateless — kiểm tra cả inbound và outbound) |
-| Muốn giám sát **RAM và disk usage** của EC2 | Xem CloudWatch mặc định | Cài **CloudWatch Agent** (metric này không có trong default namespace) |
-| Flow Logs không capture traffic đến `169.254.169.254` | Bug của Flow Logs | **Đây là by design** — IMDS traffic bị loại trừ |
-| Traffic Mirroring không hoạt động trên instance cũ | Lỗi cấu hình | Traffic Mirroring chỉ hỗ trợ **Nitro-based instances** |
+| Tình huống                                                    | Câu trả lời SAI             | Câu trả lời ĐÚNG                                                        |
+| ------------------------------------------------------------- | --------------------------- | ----------------------------------------------------------------------- |
+| Cần phân tích **nội dung gói tin** để tìm malware             | VPC Flow Logs               | **Traffic Mirroring**                                                   |
+| Cần kiểm tra **lý do tại sao** EC2 không kết nối được đến RDS | Dùng ping/traceroute từ EC2 | **VPC Reachability Analyzer** (phân tích tĩnh, không cần traffic thực)  |
+| Flow Log record có `REJECT` nhưng Security Group đã allow     | Sai Security Group rule     | **NACL bị block** (NACL là stateless — kiểm tra cả inbound và outbound) |
+| Muốn giám sát **RAM và disk usage** của EC2                   | Xem CloudWatch mặc định     | Cài **CloudWatch Agent** (metric này không có trong default namespace)  |
+| Flow Logs không capture traffic đến `169.254.169.254`         | Bug của Flow Logs           | **Đây là by design** — IMDS traffic bị loại trừ                         |
+| Traffic Mirroring không hoạt động trên instance cũ            | Lỗi cấu hình                | Traffic Mirroring chỉ hỗ trợ **Nitro-based instances**                  |
 
 ---
 
 ### 💡 Best Practices
 
 #### Cost Optimization
+
 - **VPC Flow Logs**: Dùng **S3 với Parquet format** thay vì CloudWatch Logs để giảm chi phí lưu trữ dài hạn tới 70%. Dùng Athena để query thay vì Logs Insights.
 - **Traffic Mirroring**: Sử dụng **Mirror Filter** để chỉ capture traffic cần thiết (ví dụ: chỉ port 443, 80) thay vì ALL traffic — giảm chi phí xử lý.
 - **Reachability Analyzer**: Chạy phân tích on-demand khi gỡ lỗi, không schedule liên tục — tính phí $0.10/lần.
 - **CloudWatch Metrics**: Dùng **metric math** để tạo computed metrics thay vì push nhiều custom metrics riêng lẻ.
 
 #### Security (IAM & Security Groups)
+
 - **Nguyên tắc Least Privilege** cho IAM Role của Flow Logs: chỉ cần `logs:CreateLogGroup`, `logs:CreateLogStream`, `logs:PutLogEvents`.
 - **Encrypt Flow Logs** khi gửi đến S3 bằng SSE-KMS.
 - **Restrict** quyền tạo/xóa Traffic Mirroring session — đây là capability nhạy cảm có thể bị dùng để exfiltrate traffic.
 - Dùng **Resource-based policy** trên S3 bucket nhận Flow Logs để chặn public access.
 
 #### Performance
+
 - Đặt **CloudWatch Alarm evaluation period** tối thiểu bằng 2 periods để tránh false alarm do spike ngắn hạn.
 - Sử dụng **CloudWatch Contributor Insights** để tự động xác định top contributors (IP nào gây traffic cao nhất) thay vì viết query thủ công.
 - Với hạ tầng lớn, dùng **Transit Gateway Network Manager** thay vì theo dõi từng VPC riêng lẻ.
@@ -536,14 +570,14 @@ resource "aws_ec2_traffic_mirror_session" "analysis" {
 
 ### 📋 Bảng so sánh nhanh: Chọn công cụ nào?
 
-| Câu hỏi cần trả lời | Công cụ phù hợp |
-|---|---|
-| "Traffic có đến được đích không?" (lý thuyết) | VPC Reachability Analyzer |
-| "Traffic thực tế có đang đi đến đích không?" | VPC Flow Logs |
-| "Gói tin thực sự chứa gì?" | Traffic Mirroring |
-| "Có metric nào bất thường không?" | CloudWatch Metrics + Alarms |
-| "Log nói gì về sự cố 30 phút trước?" | CloudWatch Logs Insights |
-| "Topology mạng toàn cầu của tôi trông như thế nào?" | Transit Gateway Network Manager |
-| "RAM của EC2 đang ở mức bao nhiêu?" | CloudWatch Agent (Custom Metrics) |
+| Câu hỏi cần trả lời                                 | Công cụ phù hợp                   |
+| --------------------------------------------------- | --------------------------------- |
+| "Traffic có đến được đích không?" (lý thuyết)       | VPC Reachability Analyzer         |
+| "Traffic thực tế có đang đi đến đích không?"        | VPC Flow Logs                     |
+| "Gói tin thực sự chứa gì?"                          | Traffic Mirroring                 |
+| "Có metric nào bất thường không?"                   | CloudWatch Metrics + Alarms       |
+| "Log nói gì về sự cố 30 phút trước?"                | CloudWatch Logs Insights          |
+| "Topology mạng toàn cầu của tôi trông như thế nào?" | Transit Gateway Network Manager   |
+| "RAM của EC2 đang ở mức bao nhiêu?"                 | CloudWatch Agent (Custom Metrics) |
 
 > **Quy tắc vàng cho kỳ thi:** Nếu câu hỏi đề cập đến "**packet payload**", "**deep inspection**", hoặc "**IDS/IPS**" → đáp án là **Traffic Mirroring**. Nếu đề cập đến "**why can't connect**" hoặc "**troubleshoot connectivity**" mà không cần gửi traffic thực → **Reachability Analyzer**.
