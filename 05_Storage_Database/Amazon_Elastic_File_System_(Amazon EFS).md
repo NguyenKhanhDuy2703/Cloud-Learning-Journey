@@ -33,20 +33,20 @@ Trước khi có EFS, các ứng dụng cần shared file storage trên AWS ph�
 
 ## 2. Core Components & Keywords
 
-| Từ khóa | Bản chất |
-|---|---|
-| **NFS (Network File System)** | Giao thức chuẩn Linux/Unix cho phép mount file system qua mạng. EFS dùng NFSv4.0 và NFSv4.1. |
-| **Mount Target** | Endpoint mạng (có địa chỉ IP) được tạo trong mỗi AZ để EC2 trong AZ đó kết nối vào EFS. |
-| **Access Point** | Entry point ứng dụng cụ thể vào EFS, cho phép enforce POSIX user/group identity và root directory. |
-| **Storage Class** | Phân tầng lưu trữ: `Standard`, `Standard-IA`, `One Zone`, `One Zone-IA` — tối ưu chi phí. |
-| **Lifecycle Policy** | Quy tắc tự động di chuyển file sang Infrequent Access (IA) tier sau N ngày không truy cập. |
-| **Throughput Mode** | Cách EFS tính throughput: `Bursting` (theo size), `Provisioned` (đặt cố định), `Elastic` (auto-scale). |
-| **Performance Mode** | `General Purpose` (latency thấp) vs `Max I/O` (throughput cao, latency cao hơn). |
-| **EFS File Sync / DataSync** | Dịch vụ di chuyển file từ on-premises hoặc S3 vào EFS nhanh chóng. |
-| **POSIX Permissions** | Hệ thống phân quyền Unix tiêu chuẩn (user/group/other + rwx) — EFS hỗ trợ đầy đủ. |
-| **Elastic Throughput** | Mode mới nhất — throughput tự động scale từ vài MB/s đến GB/s theo workload thực tế, không cần cấu hình. |
-| **Infrequent Access (IA)** | Storage tier cho file ít được truy cập — rẻ hơn tới 92% so với Standard, truy cập có thêm phí. |
-| **One Zone Storage** | EFS lưu dữ liệu trong **một AZ duy nhất** — rẻ hơn ~47%, phù hợp dev/test hoặc workload chịu được AZ failure. |
+| Từ khóa                       | Bản chất                                                                                                      |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **NFS (Network File System)** | Giao thức chuẩn Linux/Unix cho phép mount file system qua mạng. EFS dùng NFSv4.0 và NFSv4.1.                  |
+| **Mount Target**              | Endpoint mạng (có địa chỉ IP) được tạo trong mỗi AZ để EC2 trong AZ đó kết nối vào EFS.                       |
+| **Access Point**              | Entry point ứng dụng cụ thể vào EFS, cho phép enforce POSIX user/group identity và root directory.            |
+| **Storage Class**             | Phân tầng lưu trữ: `Standard`, `Standard-IA`, `One Zone`, `One Zone-IA` — tối ưu chi phí.                     |
+| **Lifecycle Policy**          | Quy tắc tự động di chuyển file sang Infrequent Access (IA) tier sau N ngày không truy cập.                    |
+| **Throughput Mode**           | Cách EFS tính throughput: `Bursting` (theo size), `Provisioned` (đặt cố định), `Elastic` (auto-scale).        |
+| **Performance Mode**          | `General Purpose` (latency thấp) vs `Max I/O` (throughput cao, latency cao hơn).                              |
+| **EFS File Sync / DataSync**  | Dịch vụ di chuyển file từ on-premises hoặc S3 vào EFS nhanh chóng.                                            |
+| **POSIX Permissions**         | Hệ thống phân quyền Unix tiêu chuẩn (user/group/other + rwx) — EFS hỗ trợ đầy đủ.                             |
+| **Elastic Throughput**        | Mode mới nhất — throughput tự động scale từ vài MB/s đến GB/s theo workload thực tế, không cần cấu hình.      |
+| **Infrequent Access (IA)**    | Storage tier cho file ít được truy cập — rẻ hơn tới 92% so với Standard, truy cập có thêm phí.                |
+| **One Zone Storage**          | EFS lưu dữ liệu trong **một AZ duy nhất** — rẻ hơn ~47%, phù hợp dev/test hoặc workload chịu được AZ failure. |
 
 ---
 
@@ -82,6 +82,7 @@ graph TB
 ```
 
 **Giải thích sơ đồ:** Ba loại storage phục vụ các nhu cầu khác nhau và **không thay thế lẫn nhau**:
+
 - **Block Storage (EBS):** Nhanh nhất, latency thấp nhất, nhưng chỉ một instance attach được — lý tưởng cho database và OS.
 - **File Storage (EFS):** Nhiều instance cùng mount và đọc/ghi đồng thời qua giao thức NFS — lý tưởng cho workload chia sẻ.
 - **Object Storage (S3):** Không mount được như ổ đĩa, truy cập qua API — lý tưởng cho lưu trữ quy mô petabyte.
@@ -131,6 +132,7 @@ graph TB
 ```
 
 **Giải thích sơ đồ:**
+
 1. **EFS File System** là thực thể trung tâm — dữ liệu được tự động replicate qua **ít nhất 3 Availability Zones** (với Standard class), đảm bảo durability 99.999999999% (11 nines).
 2. **Mount Target** là "cổng vào" EFS trong mỗi AZ — mỗi AZ cần một Mount Target riêng với địa chỉ IP thuộc subnet của AZ đó.
 3. **EC2 instances** trong mỗi AZ mount vào Mount Target **gần nhất** (cùng AZ) để tối ưu latency — không nên mount qua AZ khác.
@@ -142,34 +144,32 @@ graph TB
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Standard: File được tạo/upload
+    [*] --> Standard
 
     Standard: 📂 Standard\n(Frequently Accessed)\nGiá: $$$$\nLatency: Sub-ms
-    Standard_IA: 📦 Standard-IA\n(Infrequent Access)\nGiá: $ (lưu trữ)\nLatency: Thêm vài ms
+    Standard_IA: 📦 Standard-IA\n(Infrequent Access)\nGiá: $ (rẻ hơn)\nLatency: Thêm vài ms
 
     OneZone: 📂 One Zone\n(Single AZ)\nGiá: $$$\nDurability: 1 AZ
     OneZone_IA: 📦 One Zone-IA\n(Single AZ + IA)\nGiá: $ (rẻ nhất)\nDurability: 1 AZ
 
-    Standard --> Standard_IA: Lifecycle Policy\n(Ví dụ: Sau 30 ngày\nkhông truy cập)
+    Standard --> Standard_IA: Lifecycle Policy\n(e.g. 30 days no access)
+    OneZone --> OneZone_IA: Lifecycle Policy\n(e.g. 30 days no access)
 
-    Standard_IA --> Standard: File được đọc lại\n(Automatic transition)
-
-    OneZone --> OneZone_IA: Lifecycle Policy
-
-    OneZone_IA --> OneZone: File được đọc lại
+    Standard_IA --> Standard: Access/read event\n(if transition-on-access enabled)
+    OneZone_IA --> OneZone: Access/read event\n(if transition-on-access enabled)
 
     note right of Standard_IA
-        Tiết kiệm đến 92%
-        chi phí lưu trữ
+        Tiết kiệm đến 92% chi phí lưu trữ
         so với Standard
     end note
 ```
 
 **Giải thích sơ đồ:**
-1. File mới tạo mặc định vào **Standard** (hoặc **One Zone** nếu chọn One Zone file system).
-2. **Lifecycle Policy** tự động chuyển file sang tier `IA` (Infrequent Access) sau số ngày cấu hình (7, 14, 30, 60, 90 ngày).
-3. Khi file trong IA tier được truy cập, EFS **tự động chuyển ngược** về Standard tier (có thể cấu hình `transition-on-access` behavior).
-4. **One Zone** vs **Standard**: Chọn Standard để có high availability (≥3 AZs), chọn One Zone cho dev/test hoặc workload không cần multi-AZ durability — rẻ hơn ~47%.
+
+1. File mới tạo mặc định vào **Standard** (hoặc **One Zone** nếu tạo One Zone file system).
+2. **Lifecycle Policy** chuyển file sang tier `IA` (Infrequent Access) sau số ngày cấu hình (7, 14, 30, 60, 90 ngày).
+3. Nếu bật `transition-on-access`, file trong IA tier sẽ chuyển ngược lại về **Standard** hoặc **One Zone** khi được truy cập.
+4. **One Zone** vẫn chỉ lưu dữ liệu trong một AZ, nên phù hợp dev/test hoặc workloads không cần multi-AZ durability — rẻ hơn ~47% so với Standard.
 
 ---
 
@@ -231,27 +231,27 @@ graph LR
 
 ### 4.1 EFS vs Các Dịch vụ Storage AWS Khác
 
-| Tiêu chí | Amazon EFS | Amazon EBS | Amazon S3 | Amazon FSx |
-|---|---|---|---|---|
-| **Loại Storage** | File (NFS) | Block | Object | File (NFS/SMB/Lustre) |
-| **Giao thức** | NFSv4 | iSCSI | REST API | NFS / SMB / Lustre / OpenZFS |
-| **Concurrent Access** | ✅ Hàng nghìn clients | ❌ 1 instance (Multi-Attach limited) | ✅ Không giới hạn | ✅ Nhiều clients |
-| **Elasticity** | ✅ Auto grow/shrink | ❌ Phải resize thủ công | ✅ Unlimited | ✅ (tùy loại) |
-| **OS Support** | Linux only | Linux + Windows | Any (API) | Linux + Windows (tùy loại) |
-| **Serverless** | ✅ Fully managed | ❌ Cần attach/manage | ✅ Fully managed | ✅ Fully managed |
-| **Use case chính** | Shared Linux workloads | DB, OS boot volume | Backup, archive, data lake | Windows shares, HPC, Lustre |
-| **Pricing model** | Per GB stored + access | Per GB provisioned | Per GB stored + requests | Per GB provisioned |
+| Tiêu chí              | Amazon EFS             | Amazon EBS                           | Amazon S3                  | Amazon FSx                   |
+| --------------------- | ---------------------- | ------------------------------------ | -------------------------- | ---------------------------- |
+| **Loại Storage**      | File (NFS)             | Block                                | Object                     | File (NFS/SMB/Lustre)        |
+| **Giao thức**         | NFSv4                  | iSCSI                                | REST API                   | NFS / SMB / Lustre / OpenZFS |
+| **Concurrent Access** | ✅ Hàng nghìn clients  | ❌ 1 instance (Multi-Attach limited) | ✅ Không giới hạn          | ✅ Nhiều clients             |
+| **Elasticity**        | ✅ Auto grow/shrink    | ❌ Phải resize thủ công              | ✅ Unlimited               | ✅ (tùy loại)                |
+| **OS Support**        | Linux only             | Linux + Windows                      | Any (API)                  | Linux + Windows (tùy loại)   |
+| **Serverless**        | ✅ Fully managed       | ❌ Cần attach/manage                 | ✅ Fully managed           | ✅ Fully managed             |
+| **Use case chính**    | Shared Linux workloads | DB, OS boot volume                   | Backup, archive, data lake | Windows shares, HPC, Lustre  |
+| **Pricing model**     | Per GB stored + access | Per GB provisioned                   | Per GB stored + requests   | Per GB provisioned           |
 
 ### 4.2 Amazon FSx — Khi nào dùng thay EFS?
 
 **Amazon FSx** là họ file system managed services hỗ trợ nhiều giao thức khác nhau:
 
-| Amazon FSx For | Giao thức | Best For |
-|---|---|---|
-| **FSx for Windows File Server** | SMB (Windows) | Windows workloads, Active Directory, .NET apps |
-| **FSx for Lustre** | Lustre (HPC) | Machine learning, HPC, video rendering — tích hợp S3 |
-| **FSx for NetApp ONTAP** | NFS, SMB, iSCSI | Multi-protocol, tiering, SnapMirror replication |
-| **FSx for OpenZFS** | NFS, OpenZFS | Migrate from on-prem ZFS, low-latency NFS |
+| Amazon FSx For                  | Giao thức       | Best For                                             |
+| ------------------------------- | --------------- | ---------------------------------------------------- |
+| **FSx for Windows File Server** | SMB (Windows)   | Windows workloads, Active Directory, .NET apps       |
+| **FSx for Lustre**              | Lustre (HPC)    | Machine learning, HPC, video rendering — tích hợp S3 |
+| **FSx for NetApp ONTAP**        | NFS, SMB, iSCSI | Multi-protocol, tiering, SnapMirror replication      |
+| **FSx for OpenZFS**             | NFS, OpenZFS    | Migrate from on-prem ZFS, low-latency NFS            |
 
 > **Quy tắc lựa chọn:** Nếu workload Linux và cần **shared NFS đơn giản, elastic, serverless** → dùng **EFS**. Nếu cần **Windows shares (SMB)** → FSx for Windows. Nếu cần **HPC/ML throughput cực cao** → FSx for Lustre.
 
@@ -261,10 +261,10 @@ graph LR
 
 #### 4.3.1 Encryption
 
-| Loại | Cơ chế | Ghi chú |
-|---|---|---|
-| **Encryption at Rest** | AWS KMS (AES-256) | Bật khi tạo FS, không thể bật sau khi tạo |
-| **Encryption in Transit** | TLS 1.2 | Bật bằng tham số `-o tls` khi mount |
+| Loại                      | Cơ chế            | Ghi chú                                   |
+| ------------------------- | ----------------- | ----------------------------------------- |
+| **Encryption at Rest**    | AWS KMS (AES-256) | Bật khi tạo FS, không thể bật sau khi tạo |
+| **Encryption in Transit** | TLS 1.2           | Bật bằng tham số `-o tls` khi mount       |
 
 #### 4.3.2 Access Control — 3 lớp
 
@@ -292,11 +292,13 @@ Lớp 3: POSIX Permissions + Access Points
 ### 4.4 EFS với AWS Lambda
 
 Lambda có thể mount EFS file system — đây là tính năng đặc biệt cho phép Lambda functions:
+
 - Đọc/ghi file lớn hơn giới hạn `/tmp` (512MB → 10GB).
 - **Chia sẻ dữ liệu** giữa nhiều Lambda invocations đồng thời (warm cache, shared model files).
 - Triển khai ML model lớn (vài GB) mà không cần đóng gói vào deployment package.
 
 **Yêu cầu:**
+
 - Lambda phải chạy trong **VPC** (cùng VPC với EFS Mount Target).
 - Lambda execution role cần permission `elasticfilesystem:ClientMount`.
 - Cấu hình `mountPoints` trong Lambda function settings.
@@ -313,6 +315,7 @@ ECS Task / EKS Pod
 ```
 
 **Lợi ích trong container workloads:**
+
 - **Stateful containers** có thể lưu trữ persistent data mà không gắn kết với node cụ thể.
 - Khi container khởi động lại hoặc di chuyển sang node khác → data vẫn còn nguyên.
 - **Access Points** giúp cô lập data giữa các ứng dụng khác nhau trên cùng EFS.
@@ -323,13 +326,13 @@ ECS Task / EKS Pod
 
 **AWS DataSync** là dịch vụ chuyên dụng để migrate và sync dữ liệu vào/ra EFS:
 
-| Tính năng | Chi tiết |
-|---|---|
-| **Tốc độ** | Nhanh hơn công cụ open-source (rsync) đến 10 lần |
-| **Nguồn hỗ trợ** | NFS (on-premises), SMB, HDFS, S3, FSx, EFS khác |
-| **Integrity check** | Tự động verify checksum sau khi transfer |
-| **Scheduling** | Chạy theo lịch (hourly, daily) để sync liên tục |
-| **Agent** | Cài DataSync Agent on-premises (VMware/EC2) kết nối về AWS |
+| Tính năng           | Chi tiết                                                   |
+| ------------------- | ---------------------------------------------------------- |
+| **Tốc độ**          | Nhanh hơn công cụ open-source (rsync) đến 10 lần           |
+| **Nguồn hỗ trợ**    | NFS (on-premises), SMB, HDFS, S3, FSx, EFS khác            |
+| **Integrity check** | Tự động verify checksum sau khi transfer                   |
+| **Scheduling**      | Chạy theo lịch (hourly, daily) để sync liên tục            |
+| **Agent**           | Cài DataSync Agent on-premises (VMware/EC2) kết nối về AWS |
 
 ---
 
@@ -364,6 +367,7 @@ graph TB
 ```
 
 **Lợi ích:**
+
 - Mọi instance đều thấy file upload ngay lập tức — không cần sync.
 - Auto Scaling thêm instances mới sẽ tự động mount EFS và có đầy đủ media files.
 - Tách biệt storage khỏi compute — scale độc lập.
@@ -471,6 +475,7 @@ S3 (raw data) → AWS DataSync → EFS (training-data/)
 **Bài toán:** Lambda function cần xử lý video files lớn (vài GB) — vượt quá giới hạn `/tmp` của Lambda (512MB theo mặc định).
 
 **Giải pháp:**
+
 1. Video upload vào S3 → trigger Lambda.
 2. Lambda mount EFS (qua Access Point `/processing`).
 3. Lambda download video từ S3 vào `/mnt/efs/processing/`.
@@ -507,16 +512,16 @@ def handler(event, context):
 
 ### 🎯 Các "bẫy" thường gặp trong kỳ thi
 
-| Tình huống câu hỏi | Câu trả lời SAI | Câu trả lời ĐÚNG |
-|---|---|---|
-| Cần shared file storage cho **nhiều EC2 Linux** instances | Amazon EBS | **Amazon EFS** |
-| Cần shared storage cho **Windows** workloads với **Active Directory** | Amazon EFS | **Amazon FSx for Windows File Server** |
-| EFS mount **thất bại** từ EC2 | Kiểm tra IAM role | Kiểm tra **Security Group của Mount Target** (TCP 2049 có được allow không) |
-| Muốn **bật encryption at rest** cho EFS đang dùng | Bật trong settings | **Không thể** — phải tạo FS mới với encryption bật từ đầu, migrate data |
-| EFS **tốn phí cao** dù dữ liệu ít truy cập | Dùng S3 thay thế | Bật **Lifecycle Policy** để chuyển sang Standard-IA (tiết kiệm 92%) |
-| Lambda cần xử lý file > 512MB | Tăng memory Lambda | Mount **Amazon EFS** vào Lambda (Lambda phải trong VPC) |
-| Cần throughput cao cho **HPC/ML** không cần shared | Amazon EFS Max I/O | **Amazon FSx for Lustre** (tích hợp S3, throughput vượt trội) |
-| **One Zone EFS** bị mất dữ liệu | Đây là bug | **By design** — One Zone chỉ lưu 1 AZ, nếu AZ fail thì mất data |
+| Tình huống câu hỏi                                                    | Câu trả lời SAI    | Câu trả lời ĐÚNG                                                            |
+| --------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------- |
+| Cần shared file storage cho **nhiều EC2 Linux** instances             | Amazon EBS         | **Amazon EFS**                                                              |
+| Cần shared storage cho **Windows** workloads với **Active Directory** | Amazon EFS         | **Amazon FSx for Windows File Server**                                      |
+| EFS mount **thất bại** từ EC2                                         | Kiểm tra IAM role  | Kiểm tra **Security Group của Mount Target** (TCP 2049 có được allow không) |
+| Muốn **bật encryption at rest** cho EFS đang dùng                     | Bật trong settings | **Không thể** — phải tạo FS mới với encryption bật từ đầu, migrate data     |
+| EFS **tốn phí cao** dù dữ liệu ít truy cập                            | Dùng S3 thay thế   | Bật **Lifecycle Policy** để chuyển sang Standard-IA (tiết kiệm 92%)         |
+| Lambda cần xử lý file > 512MB                                         | Tăng memory Lambda | Mount **Amazon EFS** vào Lambda (Lambda phải trong VPC)                     |
+| Cần throughput cao cho **HPC/ML** không cần shared                    | Amazon EFS Max I/O | **Amazon FSx for Lustre** (tích hợp S3, throughput vượt trội)               |
+| **One Zone EFS** bị mất dữ liệu                                       | Đây là bug         | **By design** — One Zone chỉ lưu 1 AZ, nếu AZ fail thì mất data             |
 
 ---
 
@@ -548,15 +553,15 @@ def handler(event, context):
 
 ### 📋 Bảng quyết định nhanh: Chọn Storage Service nào?
 
-| Yêu cầu | Dịch vụ |
-|---|---|
-| Shared file storage, Linux, nhiều instances | **Amazon EFS** |
-| Single-instance, low-latency, database/OS | **Amazon EBS** |
-| Large-scale archive, backup, data lake | **Amazon S3** |
-| Windows file shares, Active Directory | **Amazon FSx for Windows** |
-| HPC, ML training, tích hợp S3 | **Amazon FSx for Lustre** |
+| Yêu cầu                                             | Dịch vụ                         |
+| --------------------------------------------------- | ------------------------------- |
+| Shared file storage, Linux, nhiều instances         | **Amazon EFS**                  |
+| Single-instance, low-latency, database/OS           | **Amazon EBS**                  |
+| Large-scale archive, backup, data lake              | **Amazon S3**                   |
+| Windows file shares, Active Directory               | **Amazon FSx for Windows**      |
+| HPC, ML training, tích hợp S3                       | **Amazon FSx for Lustre**       |
 | Multi-protocol (NFS+SMB+iSCSI), enterprise features | **Amazon FSx for NetApp ONTAP** |
-| Migrate on-premises file data vào EFS | **AWS DataSync** |
-| Lambda cần xử lý file lớn hơn 10GB | **EFS + Lambda trong VPC** |
+| Migrate on-premises file data vào EFS               | **AWS DataSync**                |
+| Lambda cần xử lý file lớn hơn 10GB                  | **EFS + Lambda trong VPC**      |
 
 > **Quy tắc vàng cho kỳ thi:** Mỗi khi đề bài có từ **"shared"**, **"concurrent"**, **"multiple EC2"**, và **"Linux"** → đáp án gần như chắc chắn là **Amazon EFS**. Nếu thêm từ **"Windows"** hoặc **"SMB"** → chuyển sang **FSx for Windows File Server**.
