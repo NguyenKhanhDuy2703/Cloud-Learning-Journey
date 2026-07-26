@@ -1,11 +1,47 @@
 {
   "version": 1,
   "skills": {
+    "aws-cost-optimization": {
+      "source": "ahmedasmar/devops-claude-skills",
+      "sourceType": "github",
+      "skillPath": "aws-cost-optimization/skills/SKILL.md",
+      "computedHash": "1b9e39784540378be809c9ab3ca591a2d306380d8b7b8efbbfbac761661ed8fb"
+    },
+    "ci-cd": {
+      "source": "ahmedasmar/devops-claude-skills",
+      "sourceType": "github",
+      "skillPath": "ci-cd/skills/SKILL.md",
+      "computedHash": "d68298996c8d4b97011449fd1e16b31272f3f0b39301a443e90c1ad5177cb1cf"
+    },
     "claude-api": {
       "source": "anthropics/skills",
       "sourceType": "github",
       "skillPath": "skills/claude-api/SKILL.md",
       "computedHash": "af3981031f9a240d66f9e44383f13fa94600ca238ee1d0db009b6a4ecbdf78b9"
+    },
+    "gitops-workflows": {
+      "source": "ahmedasmar/devops-claude-skills",
+      "sourceType": "github",
+      "skillPath": "gitops-workflows/skills/SKILL.md",
+      "computedHash": "8b8691441938ddfcfdae1828ab9c465611eac475c944e2ca3022afd3dcdd24a4"
+    },
+    "iac-terraform": {
+      "source": "ahmedasmar/devops-claude-skills",
+      "sourceType": "github",
+      "skillPath": "iac-terraform/skills/SKILL.md",
+      "computedHash": "5d53da331aa473c4aa05d5ad464d70c563d5af8f82201f7e2229de9950b0d3e0"
+    },
+    "k8s-troubleshooter": {
+      "source": "ahmedasmar/devops-claude-skills",
+      "sourceType": "github",
+      "skillPath": "k8s-troubleshooter/skills/SKILL.md",
+      "computedHash": "b6cc39c1c93db21caf9663d8daee30122c06017df5366a431c19244d661b45db"
+    },
+    "monitoring-observability": {
+      "source": "ahmedasmar/devops-claude-skills",
+      "sourceType": "github",
+      "skillPath": "monitoring-observability/skills/SKILL.md",
+      "computedHash": "d00c9b5effe5d18995acdffdc3438e174628f66fad1fcef80d9a668b4f6e34b3"
     },
     "template-skill": {
       "source": "anthropics/skills",
