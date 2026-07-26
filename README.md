@@ -1,4 +1,4 @@
-﻿# ☁️ AWS & Cloud Computing Learning Journey
+# ☁️ AWS & Cloud Computing Learning Journey
 
 Chào mừng đến với kho lưu trữ kiến thức AWS của tôi! Repository này lưu trữ, tổng hợp và phân tích toàn bộ kiến thức, các ghi chú (notes) và các bài thực hành (labs) mà tôi đã và đang tìm hiểu về hệ sinh thái **Điện toán Đám mây (Cloud Computing)** và **Generative AI** trên AWS.
 
@@ -12,24 +12,39 @@ Kho lưu trữ được chia rải đều từ các kiến thức căn bản nh�
 
 ```text
 Cloud-Learning-Journey/
-├── 01_Cloud_Architecture_Fundamentals/ # Khái niệm & Nền tảng Đám mây
-├── 02_Security_Identity/               # Bảo mật, IAM, Amazon Macie
-├── 03_Networking/                      # Mạng (VPC, Connectivity, Edge Services)
-├── 04_Compute_Serverless/              # Máy chủ ảo (EC2), Container & Serverless (Lambda)
-├── 05_Storage_Database/                # Lưu trữ (S3) và CSDL (Aurora, DynamoDB, Neptune, ElastiCache)
-├── 06_Generative_AI/                   # Amazon Bedrock, GenAI, Agents, RAG
-├── 07_Analytics/                       # Phân tích dữ liệu (Athena, OpenSearch)
-├── 08_Data_Engineering/                # Xử lý & Kỹ thuật dữ liệu (Glue, EMR, Redshift, Kinesis)
-├── 09_AWS Customer Engagement/         # Các dịch vụ tương tác (Amazon Connect)
-├── 10_Cost_Optimization/               # Chiến lược tối ưu hóa chi phí AWS
-├── 11_Observability/                   # Giám sát và quan sát với CloudWatch
-├── 12_Cloud_Governance/                # Quản trị cloud, SCP, tagging và cost-aware governance
+├── AWS_Knowledge/
+│   ├── 01_Cloud_Architecture_Fundamentals/ # Khái niệm & Nền tảng Đám mây
+│   ├── 02_Security_Identity/               # Bảo mật, IAM, Amazon Macie
+│   ├── 03_Networking/                      # Mạng (VPC, Connectivity, Edge Services)
+│   ├── 04_Compute_Serverless/              # Máy chủ ảo (EC2), Container & Serverless (Lambda)
+│   ├── 05_Storage_Database/                # Lưu trữ (S3) và CSDL (Aurora, DynamoDB, Neptune, ElastiCache)
+│   ├── 06_Generative_AI/                   # Amazon Bedrock, GenAI, Agents, RAG
+│   ├── 07_Analytics/                       # Phân tích dữ liệu (Athena, OpenSearch)
+│   ├── 08_Data_Engineering/                # Xử lý & Kỹ thuật dữ liệu (Glue, EMR, Redshift, Kinesis)
+│   ├── 09_AWS Customer Engagement/         # Các dịch vụ tương tác (Amazon Connect)
+│   ├── 10_Cost_Optimization/               # Chiến lược tối ưu hóa chi phí AWS
+│   ├── 11_Observability/                   # Giám sát và quan sát với CloudWatch
+│   └── 12_Cloud_Governance/                # Quản trị cloud, SCP, tagging và cost-aware governance
+├── Deep_Dive_Infrastructure/           # Học sâu hạ tầng & Sơ đồ quan hệ các dịch vụ
 └── Example/                            # Các thư mục code thực hành và dự án mẫu (Labs/Workspaces)
     └── my-workspace/
         ├── lab1-study/                 # Lab 1: Tích hợp Bedrock (Study Buddy)
         ├── lab2-cert/                  # Lab 2: Luyện thi với AI CLI và Bedrock Agents
         └── lab3-kiro/                  # Lab 3: Dự án Kiro Full-stack (React/Vite + Node.js)
 ```
+
+---
+
+## 🛠️ Học sâu Hạ tầng AWS (Deep Dive Infrastructure)
+
+Chương trình học nâng cao, tập trung phân tích sự liên kết và luồng đi của dữ liệu giữa các dịch vụ lớn trong thực tế:
+
+*   **[Tổng quan & Sơ đồ kiến trúc 3-Tier](./Deep_Dive_Infrastructure/README.md):** Xem sơ đồ phối hợp tổng thể của hệ thống.
+*   **[Phase 1: Foundations & Core Concepts](./Deep_Dive_Infrastructure/01_Foundations_Core_Concepts/README.md):** Cloud Computing, Shared Responsibility Model, và Well-Architected Framework.
+*   **[Phase 2: Core Compute, Networking & IAM](./Deep_Dive_Infrastructure/02_Core_Compute_Networking_IAM/README.md):** VPC, EC2, và cơ chế bảo mật IAM.
+*   **[Phase 3: Storage, Content Delivery & SES](./Deep_Dive_Infrastructure/03_Storage_ContentDelivery_SES/README.md):** S3, CloudFront, Route 53, SES và CloudWatch.
+*   **[Phase 4: Databases & Caching](./Deep_Dive_Infrastructure/04_Databases_Caching/README.md):** RDS, DynamoDB, và ElastiCache.
+*   **[Phase 5: Containers & Serverless](./Deep_Dive_Infrastructure/05_Containers_Serverless/README.md):** ECR, ECS, EKS, Fargate, Lambda, và API Gateway.
 
 ---
 
@@ -42,26 +57,26 @@ Cloud-Learning-Journey/
 
 ### 2. Quản lý Định danh & Bảo mật (`02_Security_Identity`)
 
-- **[IAM Deep Dive](./02_Security_Identity/IAM_DeepDive.md):** Phân tích sâu về Quản lý định danh (Users, Roles, Policies, Best Practices).
+- **[IAM Deep Dive](./AWS_Knowledge/02_Security_Identity/IAM_DeepDive.md):** Phân tích sâu về Quản lý định danh (Users, Roles, Policies, Best Practices).
 - **Network Security:** Các lớp bảo vệ mạng (Security Groups vs NACL).
 - **Amazon Macie:** Khám phá công cụ phân tích và bảo vệ dữ liệu nhạy cảm sử dụng Machine Learning.
 
 ### 3. Dịch vụ Mạng (`03_Networking`)
 
-- Kế hoạch và thiết kế [Amazon VPC](./03_Networking/AmazonVPC.md).
-- [Kết nối Mạng](./03_Networking/Connectivity.md) (VPN, Direct Connect, Transit Gateway).
-- [Dịch vụ biên - Edge Services](./03_Networking/Edge_services.md) (CloudFront, Route53, WAF).
+- Kế hoạch và thiết kế [Amazon VPC](./AWS_Knowledge/03_Networking/AmazonVPC.md).
+- [Kết nối Mạng](./AWS_Knowledge/03_Networking/Connectivity.md) (VPN, Direct Connect, Transit Gateway).
+- [Dịch vụ biên - Edge Services](./AWS_Knowledge/03_Networking/Edge_services.md) (CloudFront, Route53, WAF).
 
 ### 4. Máy tính & Serverless (`04_Compute_Serverless`)
 
-- **Compute:** Kiến thức về [EC2](./04_Compute_Serverless/EC2_Overview.md) và Elastic Beanstalk.
-- **Microservices & Serverless:** [Container Services](./04_Compute_Serverless/container_service.md) (ECS, EKS) và Kiến trúc Event-Driven với [AWS Lambda](./04_Compute_Serverless/Lambda_Foundations.md).
+- **Compute:** Kiến thức về [EC2](./AWS_Knowledge/04_Compute_Serverless/EC2_Overview.md) và Elastic Beanstalk.
+- **Microservices & Serverless:** [Container Services](./AWS_Knowledge/04_Compute_Serverless/container_service.md) (ECS, EKS) và Kiến trúc Event-Driven với [AWS Lambda](./AWS_Knowledge/04_Compute_Serverless/Lambda_Foundations.md).
 
 ### 5. Lưu trữ & Khai thác Dữ liệu (`05_Storage_Database`)
 
-- **Storage:** Khái niệm [Các dịch vụ lưu trữ](./05_Storage_Database/storage_service.md) cốt lõi như S3, EBS, EFS.
-- **Databases:** Tổng quan về [các dịch vụ cơ sở dữ liệu](./05_Storage_Database/database_service.md).
-- Đi sâu vào thiết kế NoSQL với [DynamoDB](./05_Storage_Database/DynamoDB_DesignPatterns.md), GraphDB với [Neptune](./05_Storage_Database/Amazon_Neptun.md), và RDBMS với [Aurora](./05_Storage_Database/Amazon_Aurora_Getting_Started.md).
+- **Storage:** Khái niệm [Các dịch vụ lưu trữ](./AWS_Knowledge/05_Storage_Database/storage_service.md) cốt lõi như S3, EBS, EFS.
+- **Databases:** Tổng quan về [các dịch vụ cơ sở dữ liệu](./AWS_Knowledge/05_Storage_Database/database_service.md).
+- Đi sâu vào thiết kế NoSQL với [DynamoDB](./AWS_Knowledge/05_Storage_Database/DynamoDB_DesignPatterns.md), GraphDB với [Neptune](./AWS_Knowledge/05_Storage_Database/Amazon_Neptun.md), và RDBMS với [Aurora](./AWS_Knowledge/05_Storage_Database/Amazon_Aurora_Getting_Started.md).
 
 ### 6. Tối ưu hóa Chi phí AWS (`10_Cost_Optimization`)
 
@@ -89,13 +104,13 @@ Cloud-Learning-Journey/
 
 ### 10. Giám sát & Quan sát (`11_Observability`)
 
-- **Amazon CloudWatch:** [Getting Started](./11_Observability/Amazon_CloudWatch_Getting_Started.md) với logs, metrics, alarms và dashboard.
+- **Amazon CloudWatch:** [Getting Started](./AWS_Knowledge/11_Observability/Amazon_CloudWatch_Getting_Started.md) với logs, metrics, alarms và dashboard.
 - Kết hợp **Synthetics / RUM** với cảnh báo để phát hiện sự cố sớm.
 - Phân biệt giữa observability và monitoring.
 
 ### 11. Cloud Governance (`12_Cloud_Governance`)
 
-- **Cloud Governance:** [Cân bằng Bảo mật và Chi phí](./12_Cloud_Governance/Cloud_Governance.md).
+- **Cloud Governance:** [Cân bằng Bảo mật và Chi phí](./AWS_Knowledge/12_Cloud_Governance/Cloud_Governance.md).
 - **AWS Organizations** và **SCP** để kiểm soát chính sách người dùng.
 - **Tag Policy** và **Cost Allocation Tags** để theo dõi chi phí chính xác.
 - **AWS Control Tower** và **AWS Config** cho governance tự động.
