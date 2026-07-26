@@ -77,7 +77,7 @@ graph TD
 
 ## 📂 Các giai đoạn phân tích chuyên sâu (Learning Phases)
 
-Để giúp bạn tiếp thu một cách hệ thống và bám sát theo roadmap.sh/aws, kiến thức được chia làm 5 Phase cụ thể:
+Để giúp bạn tiếp thu một cách hệ thống và bám sát theo roadmap.sh/aws, kiến thức được chia làm 8 Phase cụ thể:
 
 1. **[Phase 1: Foundations & Core Concepts (Nền tảng & Khái niệm cốt lõi)](./01_Foundations_Core_Concepts/README.md)**
    - Tìm hiểu về các mô hình cloud, hạ tầng toàn cầu, Shared Responsibility Model và 6 trụ cột của Well-Architected Framework.
@@ -89,6 +89,12 @@ graph TD
    - Tìm hiểu cách tối ưu hóa tầng dữ liệu thông qua sự kết hợp của `RDS`, `DynamoDB`, `ElastiCache` và các mẫu thiết kế cache.
 5. **[Phase 5: Containers & Serverless (Container & Điện toán Không máy chủ)](./05_Containers_Serverless/README.md)**
    - Phân tích cơ chế hoạt động và tích hợp các dịch vụ hiện đại: `ECR`, `ECS`, `EKS`, `Fargate`, `Lambda`, và `API Gateway`.
+6. **[Phase 6: Multi-Account Governance & Global Traffic (Quản trị Đa tài khoản & Điều phối Lưu lượng)](./06_MultiAccount_Governance_Global_DNS/README.md)**
+   - Phân tích tầng điều khiển: `AWS Organizations` (SCP/RCP), `IAM` (Policy Evaluation, Permissions Boundary, Identity Center) và `Route 53` (DNS tập trung, Latency Routing) trong kiến trúc multi-account.
+7. **[Phase 7: Observability & Incident Response (Quan sát Hệ thống & Xử lý Sự cố)](./07_Observability_Incident_Response/README.md)**
+   - Ba trụ cột Metrics/Logs/Traces với `CloudWatch`, `X-Ray`, `CloudTrail`, `EventBridge` — và quy trình chẩn đoán sự cố trong hệ thống phân tán.
+8. **[Phase 8: IaC, CI/CD & Deployment Automation (Hạ tầng dưới dạng Mã & Tự động hóa)](./08_IaC_CICD_Automation/README.md)**
+   - `CloudFormation`, `CDK`, `Terraform`, `StackSets`, `CodePipeline` và OIDC — biến toàn bộ hạ tầng Phase 1-7 thành code lặp lại được.
 
 ---
 

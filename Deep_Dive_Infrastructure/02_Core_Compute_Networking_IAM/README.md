@@ -4,6 +4,44 @@ Giai đoạn đầu tiên và quan trọng nhất khi bắt tay vào xây dựng
 
 ---
 
+## 📚 Tài liệu trong Phase này
+
+| File | Nội dung |
+|---|---|
+| [EC2_DeepDive.md](./EC2_DeepDive.md) | Vòng đời instance, instance types, pricing (On-Demand/RI/Spot), AMI, User Data, IMDSv2, Security Groups, Placement Groups |
+| [EC2_Storage_EBS_EFS_FSx.md](./EC2_Storage_EBS_EFS_FSx.md) | EBS volume types (gp3/io2/st1/sc1), snapshots, EFS Multi-AZ NFS, FSx for Windows/Lustre/ONTAP, storage decision matrix |
+| [AutoScaling_ALB_NLB.md](./AutoScaling_ALB_NLB.md) | ASG (Launch Template, scaling policies, lifecycle hooks, warm pools), ALB (rules, target groups, sticky sessions), NLB vs ALB |
+| [IAM_Role_EC2_Integration.md](./IAM_Role_EC2_Integration.md) | Instance Profile, IMDSv2 credential flow, Trust Policy, cross-account role, SSM Session Manager, security best practices |
+
+---
+
+## 🗺️ Sơ đồ AWS Scope — EC2 Ecosystem
+
+```
+Region (ap-southeast-1)
+├── CloudWatch           ← Region-level monitoring
+├── IAM / STS            ← Region-level (global service, but API regional)
+│
+└── VPC
+    ├── Application Load Balancer   ← VPC-level, cross-AZ
+    │
+    ├── Auto Scaling Group          ← Spans multiple AZs
+    │   ├── AZ: ap-southeast-1a
+    │   │   └── Public Subnet
+    │   │       ├── EC2 Instance ──► EBS Volume (AZ-local)
+    │   │       └── EC2 Instance ──► EBS Volume
+    │   │
+    │   └── AZ: ap-southeast-1b
+    │       └── Public Subnet
+    │           ├── EC2 Instance ──► EBS Volume
+    │           └── EC2 Instance ──► EBS Volume
+    │
+    ├── EFS (Multi-AZ Shared NFS)   ← Tất cả EC2 mount chung
+    └── FSx (Windows/Lustre)        ← Managed File System
+```
+
+---
+
 ## 🏛️ Sơ đồ thiết kế bảo mật hạ tầng cốt lõi
 
 ```mermaid

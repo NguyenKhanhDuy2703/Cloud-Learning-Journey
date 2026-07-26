@@ -45,6 +45,9 @@ Chương trình học nâng cao, tập trung phân tích sự liên kết và lu
 *   **[Phase 3: Storage, Content Delivery & SES](./Deep_Dive_Infrastructure/03_Storage_ContentDelivery_SES/README.md):** S3, CloudFront, Route 53, SES và CloudWatch.
 *   **[Phase 4: Databases & Caching](./Deep_Dive_Infrastructure/04_Databases_Caching/README.md):** RDS, DynamoDB, và ElastiCache.
 *   **[Phase 5: Containers & Serverless](./Deep_Dive_Infrastructure/05_Containers_Serverless/README.md):** ECR, ECS, EKS, Fargate, Lambda, và API Gateway.
+*   **[Phase 6: Multi-Account Governance & Global Traffic](./Deep_Dive_Infrastructure/06_MultiAccount_Governance_Global_DNS/README.md):** AWS Organizations, IAM và Route 53 trong kiến trúc multi-account.
+*   **[Phase 7: Observability & Incident Response](./Deep_Dive_Infrastructure/07_Observability_Incident_Response/README.md):** CloudWatch, X-Ray, CloudTrail, EventBridge và quy trình xử lý sự cố.
+*   **[Phase 8: IaC, CI/CD & Deployment Automation](./Deep_Dive_Infrastructure/08_IaC_CICD_Automation/README.md):** CloudFormation, CDK, Terraform, StackSets, CodePipeline và OIDC.
 
 ---
 
@@ -58,6 +61,7 @@ Chương trình học nâng cao, tập trung phân tích sự liên kết và lu
 ### 2. Quản lý Định danh & Bảo mật (`02_Security_Identity`)
 
 - **[IAM Deep Dive](./AWS_Knowledge/02_Security_Identity/IAM_DeepDive.md):** Phân tích sâu về Quản lý định danh (Users, Roles, Policies, Best Practices).
+- **[IAM Deep Dive v2](./AWS_Knowledge/02_Security_Identity/IAM_DeepDive_v2.md):** Policy Evaluation Logic, Permissions Boundary, ABAC, Confused Deputy, IAM Identity Center và Access Analyzer.
 - **Network Security:** Các lớp bảo vệ mạng (Security Groups vs NACL).
 - **Amazon Macie:** Khám phá công cụ phân tích và bảo vệ dữ liệu nhạy cảm sử dụng Machine Learning.
 
@@ -66,6 +70,7 @@ Chương trình học nâng cao, tập trung phân tích sự liên kết và lu
 - Kế hoạch và thiết kế [Amazon VPC](./AWS_Knowledge/03_Networking/AmazonVPC.md).
 - [Kết nối Mạng](./AWS_Knowledge/03_Networking/Connectivity.md) (VPN, Direct Connect, Transit Gateway).
 - [Dịch vụ biên - Edge Services](./AWS_Knowledge/03_Networking/Edge_services.md) (CloudFront, Route53, WAF).
+- **[Amazon Route 53 Deep Dive](./AWS_Knowledge/03_Networking/Amazon_Route53_DeepDive.md):** 7 Routing Policies, Health Check, Alias vs CNAME, Private Hosted Zone, Resolver hybrid DNS, DNSSEC và ARC.
 
 ### 4. Máy tính & Serverless (`04_Compute_Serverless`)
 
@@ -111,7 +116,8 @@ Chương trình học nâng cao, tập trung phân tích sự liên kết và lu
 ### 11. Cloud Governance (`12_Cloud_Governance`)
 
 - **Cloud Governance:** [Cân bằng Bảo mật và Chi phí](./AWS_Knowledge/12_Cloud_Governance/Cloud_Governance.md).
-- **AWS Organizations** và **SCP** để kiểm soát chính sách người dùng.
+- **[AWS Organizations Deep Dive](./AWS_Knowledge/12_Cloud_Governance/AWS_Organizations_DeepDive.md):** Kiến trúc multi-account theo AWS SRA, SCP vs RCP, Delegated Administrator, Control Tower và Data Perimeter.
+- **[Phân tích Tích hợp: Route 53 + IAM + Organizations](./AWS_Knowledge/12_Cloud_Governance/Route53_IAM_Organizations_Integration.md):** Ba trục WHERE / WHO / HOW USERS ARRIVE, DNS tập trung qua RAM, chống privilege escalation và quy trình xử lý sự cố.
 - **Tag Policy** và **Cost Allocation Tags** để theo dõi chi phí chính xác.
 - **AWS Control Tower** và **AWS Config** cho governance tự động.
 
