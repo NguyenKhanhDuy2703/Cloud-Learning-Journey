@@ -184,13 +184,13 @@ curl -H "X-aws-ec2-metadata-token: $TOKEN" \
 
 ```mermaid
 flowchart TD
-    subgraph SG [Stateful Security Group (ENI Level)]
+    subgraph SG ["Stateful Security Group (ENI Level)"]
         direction TB
         Client1([Client]) -->|"Inbound: Allow Port 80"| Instance1["EC2 Instance"]
         Instance1 -->|"Outbound Response: Tự động ALLOWED\n(Không cần Outbound rule)"| Client1
     end
 
-    subgraph NACL [Stateless NACL (Subnet Level)]
+    subgraph NACL ["Stateless NACL (Subnet Level)"]
         direction TB
         Client2([Client]) -->|"1. Inbound: Cần Rule ALLOW Port 80"| Subnet["Subnet Instances"]
         Subnet -->|"2. Outbound: BẮT BUỘC có Rule ALLOW Port 1024-65535"| Client2
