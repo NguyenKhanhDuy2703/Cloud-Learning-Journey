@@ -30,28 +30,18 @@ s3 = boto3.client('s3',
 
 ### Giải pháp: IAM Role + Instance Profile
 
-```
-EC2 Instance
-    │
-    │ Gửi request tới IMDSv2 (http://169.254.169.254)
-    ▼
-┌─────────────────────────────────────────┐
-│  AWS Security Token Service (STS)       │
-│  Generate temporary credentials:        │
-│  ├── AccessKeyId: ASIA... (temp)        │
-│  ├── SecretAccessKey: ...               │
-│  ├── SessionToken: ...                  │
-│  └── Expiration: 6 giờ (auto-renew)    │
-└─────────────────────────────────────────┘
-    │
-    ▼
-IAM Role (gắn vào EC2 qua Instance Profile)
-    │ has permissions defined by
-    ▼
-IAM Policy (e.g., AmazonS3ReadOnlyAccess)
-    │
-    ▼
-AWS Services (S3, DynamoDB, SSM...)
+```mermaid
+flowchart TD
+    EC2["EC2 Instance"] -->|1. Request Credentials| IMDS["IMDSv2 (169.254.169.254)"]
+    IMDS -->|2. Gọi STS để tạo| STS["AWS Security Token Service (STS)"]
+    STS -->|3. Trả về Temp Credentials\n(AccessKeyId, SecretKey, SessionToken, Expiry 6h)| EC2
+    EC2 -->|4. Sử dụng AssumeRole| Role["IAM Role (gắn qua Instance Profile)"]
+    Role -->|5. Thừa hưởng quyền| Policy["IAM Policy (e.g., S3 Read Only)"]
+    Policy -->|6. Truy cập an toàn| AWSService["AWS Services (S3, DynamoDB, SSM...)"]
+
+    style STS fill:#fff7e6,stroke:#ffa940,stroke-width:2px
+    style EC2 fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
+    style Role fill:#f9f0ff,stroke:#722ed1,stroke-width:2px
 ```
 
 ---
@@ -73,14 +63,14 @@ AWS Services (S3, DynamoDB, SSM...)
 
 ### 3.1 Khái niệm
 
-```
-IAM Role  ────────────────────────────────────┐
-                                               │
-Instance Profile (wrapper container)          │
-  └── Có thể chứa 1 IAM Role (1-to-1)  ◄─────┘
-  
-EC2 Instance
-  └── Gắn 1 Instance Profile (attach/detach không cần restart)
+```mermaid
+flowchart LR
+    Role["IAM Role"] -->|Chứa trong 1-to-1| Profile["Instance Profile (Wrapper Container)"]
+    Profile -->|Gắn trực tiếp attach| EC2["EC2 Instance (Không cần Restart)"]
+
+    style Role fill:#f9f0ff,stroke:#722ed1,stroke-width:2px
+    style Profile fill:#fff7e6,stroke:#ffa940,stroke-width:2px
+    style EC2 fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
 ```
 
 **Lưu ý quan trọng:**
@@ -386,24 +376,34 @@ aws ssm start-session --target i-1234567890abcdef0
 
 ## 8. Cross-Account Role Assumption
 
+```mermaid
+flowchart TD
+    subgraph Account_A [Account A - Production]
+        EC2["EC2 Instance with Role A\n(Trust: ec2.amazonaws.com)\n(Permission: sts:AssumeRole)"]
+    end
+
+    subgraph Account_B [Account B - Development]
+        Role_B["Role B\n(Trust: Account A)\n(Permission: s3:GetObject)"]
+        S3_B[("S3 Bucket (Restricted)\n(Bucket Policy: Allow Role B)")]
+    end
+
+    STS["AWS Security Token Service (STS)"]
+
+    EC2 -->|1. Gọi sts:AssumeRole (Role B)| STS
+    STS -->|2. Trả về Temp Credentials của Role B| EC2
+    EC2 -->|3. Dùng Temp Credentials truy cập| S3_B
+    Role_B -->|Ủy quyền truy cập| S3_B
+
+    style EC2 fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
+    style Role_B fill:#f9f0ff,stroke:#722ed1,stroke-width:2px
+    style S3_B fill:#fff7e6,stroke:#ffa940,stroke-width:2px
+    style STS fill:#f5f5f5,stroke:#d9d9d9,stroke-width:2px
 ```
-Account A (Production)          Account B (Development)
-┌────────────────────┐          ┌────────────────────────┐
-│  EC2 với Role A    │          │  S3 Bucket (Restricted) │
-│                    │          │                          │
-│  Role A Trust:     │          │  Bucket Policy:          │
-│  ec2.amazonaws.com │  assume  │  Allow Account A        │
-│                    │─────────►│  Role B to access       │
-│  Permission:       │  Role B  │                          │
-│  sts:AssumeRole   │          │  Role B:                 │
-│  (Account B Role) │          │  s3:GetObject            │
-└────────────────────┘          └────────────────────────┘
 
 Flow:
 1. EC2 (Account A) → STS AssumeRole(Role B in Account B)
 2. STS trả về temp credentials của Role B
 3. EC2 dùng credentials đó để truy cập S3 Account B
-```
 
 ---
 

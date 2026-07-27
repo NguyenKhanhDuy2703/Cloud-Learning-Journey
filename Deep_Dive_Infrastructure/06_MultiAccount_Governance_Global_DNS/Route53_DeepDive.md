@@ -9,22 +9,20 @@
 
 Hosted Zone là một container chứa các bản ghi (records) định nghĩa cách điều phối traffic cho một domain (ví dụ: `antigravity.com`) và các subdomain của nó.
 
-```
-                  ┌──────────────────────────────────────────┐
-                  │            Route 53 DNS Service          │
-                  └────────────────────┬─────────────────────┘
-                                       │
-                ┌──────────────────────┴──────────────────────┐
-                ▼                                             ▼
-  ┌───────────────────────────┐                 ┌───────────────────────────┐
-  │    Public Hosted Zone     │                 │    Private Hosted Zone    │
-  │  (Truy cập từ Internet)   │                 │  (Chỉ truy cập trong VPC) │
-  └─────────────┬─────────────┘                 └─────────────┬─────────────┘
-                │                                             │
-      ┌─────────┴─────────┐                         ┌─────────┴─────────┐
-      ▼                   ▼                         ▼                   ▼
-  User ngoài          CloudFront,               EC2 App Tier       RDS Database
-  (Internet)          ALB, S3 Web               (Private IP)       (Private IP)
+```mermaid
+flowchart TD
+    Route53["Route 53 DNS Service"] --> Public["Public Hosted Zone\n(Truy cập từ Internet)"]
+    Route53 --> Private["Private Hosted Zone\n(Chỉ truy cập trong VPC)"]
+
+    Public --> UserInternet["User ngoài (Internet)"]
+    Public --> AWSResources["CloudFront, ALB, S3 Web"]
+
+    Private --> EC2App["EC2 App Tier (Private IP)"]
+    Private --> RDSDatabase["RDS Database (Private IP)"]
+
+    style Route53 fill:#f9f0ff,stroke:#722ed1,stroke-width:2px
+    style Public fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
+    style Private fill:#fff7e6,stroke:#ffa940,stroke-width:2px
 ```
 
 ### 1.1. Public Hosted Zone (Vùng phân giải công cộng)
@@ -55,20 +53,15 @@ Routing Policy xác định cách Route 53 phản hồi lại các truy vấn DN
 - **Cơ chế:** Điều phối traffic đến nhiều tài nguyên khác nhau dựa trên tỷ lệ phần trăm (trọng số) mà bạn cấu hình.
 - **Công thức tính:** `% Traffic = (Trọng số của Record này) / (Tổng trọng số của nhóm)`
 
-```
-                                  [ User Request ]
-                                         │
-                                         ▼
-                                ┌─────────────────┐
-                                │    Route 53     │
-                                └──────┬───┬──────┘
-                   Trọng số 20% (20/100)│   │Trọng số 80% (80/100)
-                   ┌────────────────────┘   └────────────────────┐
-                   ▼                                             ▼
-         ┌───────────────────┐                         ┌───────────────────┐
-         │  EC2 Server (New) │                         │  EC2 Server (Old) │
-         │   Canary Version  │                         │ Production Version│
-         └───────────────────┘                         └───────────────────┘
+```mermaid
+flowchart TD
+    User([User Request]) --> Route53["Route 53"]
+    Route53 -->|Trọng số 20%| EC2New["EC2 Server (New)\nCanary Version"]
+    Route53 -->|Trọng số 80%| EC2Old["EC2 Server (Old)\nProduction Version"]
+
+    style Route53 fill:#f9f0ff,stroke:#722ed1,stroke-width:2px
+    style EC2New fill:#fff1f0,stroke:#f5222d,stroke-width:2px
+    style EC2Old fill:#f6ffed,stroke:#52c41a,stroke-width:2px
 ```
 
 - **Trường hợp sử dụng:**
@@ -81,15 +74,13 @@ Routing Policy xác định cách Route 53 phản hồi lại các truy vấn DN
 - **Cơ chế:** Hướng người dùng tới AWS Region cung cấp độ trễ mạng (latency) thấp nhất so với vị trí địa lý của họ.
 - **Cách thức hoạt động:** AWS liên tục đo lường độ trễ từ các nhà mạng trên khắp thế giới tới các Datacenter của họ. Khi client gửi DNS query, Route 53 đối chiếu IP của client và trả về tài nguyên thuộc Region có độ trễ nhỏ nhất.
 
-```
-    [ User tại Hà Nội ]                          [ User tại New York ]
-             │                                             │
-      (Độ trễ thấp nhất)                            (Độ trễ thấp nhất)
-             ▼                                             ▼
-┌─────────────────────────┐                   ┌─────────────────────────┐
-│ Region: ap-southeast-1  │                   │    Region: us-east-1    │
-│       (Singapore)       │                   │       (N. Virginia)     │
-└─────────────────────────┘                   └─────────────────────────┘
+```mermaid
+flowchart TD
+    UserHN([User tại Hà Nội]) -->|Độ trễ thấp nhất| SG["Region: ap-southeast-1\n(Singapore)"]
+    UserNY([User tại New York]) -->|Độ trễ thấp nhất| VA["Region: us-east-1\n(N. Virginia)"]
+
+    style SG fill:#f6ffed,stroke:#52c41a,stroke-width:2px
+    style VA fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
 ```
 
 - **Trường hợp sử dụng:** Ứng dụng toàn cầu cần tối ưu hóa tốc độ tải trang cho người dùng ở nhiều châu lục.
@@ -98,22 +89,15 @@ Routing Policy xác định cách Route 53 phản hồi lại các truy vấn DN
 - **Cơ chế:** Sử dụng để thiết lập kiến trúc Active-Passive. Tự động chuyển hướng toàn bộ traffic sang tài nguyên dự phòng (Secondary) nếu tài nguyên chính (Primary) bị sập.
 - **Yêu cầu:** Bắt buộc phải liên kết với **Route 53 Health Checks**.
 
-```
-                           [ User Request ]
-                                  │
-                                  ▼
-                         ┌─────────────────┐
-                         │    Route 53     │
-                         └──────┬───┬──────┘
-                                │   │
-             [Primary] Healthy? │   │ [Secondary] (Dự phòng)
-               ┌────────────────┘   └────────────────┐
-            YES│                                   NO│ (Nếu Primary bị Unhealthy)
-               ▼                                     ▼
-     ┌───────────────────┐                 ┌───────────────────┐
-     │ Active Web App    │                 │ Static Error Page │
-     │  (Primary IP)     │                 │   (S3 Website)    │
-     └───────────────────┘                 └───────────────────┘
+```mermaid
+flowchart TD
+    User([User Request]) --> Route53["Route 53"]
+    Route53 -->|Primary Healthy? YES| ActiveApp["Active Web App\n(Primary IP)"]
+    Route53 -->|Primary Healthy? NO| StaticPage["Static Error Page\n(S3 Website dự phòng)"]
+
+    style Route53 fill:#f9f0ff,stroke:#722ed1,stroke-width:2px
+    style ActiveApp fill:#f6ffed,stroke:#52c41a,stroke-width:2px
+    style StaticPage fill:#fff1f0,stroke:#f5222d,stroke-width:2px
 ```
 
 - **Trường hợp sử dụng:** 

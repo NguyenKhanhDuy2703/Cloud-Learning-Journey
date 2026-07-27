@@ -7,22 +7,20 @@
 
 ## 1. Tổng quan so sánh 3 loại Storage
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    EC2 Storage Decision Tree                     │
-│                                                                  │
-│  Cần ổ đĩa gắn vào 1 EC2?                                       │
-│  ├── YES → EBS (Elastic Block Store)                             │
-│  │         gp3, io2, st1, sc1                                    │
-│  │                                                               │
-│  └── NO → Cần nhiều EC2 cùng đọc/ghi?                           │
-│           ├── YES → File System dạng gì?                         │
-│           │         ├── NFS (Linux) → EFS                        │
-│           │         ├── SMB (Windows/AD) → FSx for Windows       │
-│           │         └── High-perf HPC/ML → FSx for Lustre        │
-│           │                                                       │
-│           └── NO → Xem xét S3 (object storage)                   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Start([Bắt đầu: Chọn EC2 Storage]) --> Single{"Cần gắn vào 1 EC2 duy nhất?"}
+    
+    Single -->|YES| EBS["EBS (Elastic Block Store)\n- Block Storage (1-to-1)\n- gp3, io2, st1, sc1"]
+    
+    Single -->|NO| Multi{"Cần nhiều EC2 cùng đọc/ghi (Shared)?"}
+    
+    Multi -->|YES| FSType{"Sử dụng hệ điều hành / giao thức gì?"}
+    FSType -->|Linux - NFS| EFS["Amazon EFS\n- Shared File Storage"]
+    FSType -->|Windows - SMB| FSxWin["FSx for Windows\n- Shared File Storage"]
+    FSType -->|HPC / Lustre| FSxLustre["FSx for Lustre\n- High-performance storage"]
+    
+    Multi -->|NO| S3["Amazon S3\n- Object Storage\n- Tần suất truy cập thấp / Lưu trữ tĩnh"]
 ```
 
 | Tiêu chí | EBS | EFS | FSx |
