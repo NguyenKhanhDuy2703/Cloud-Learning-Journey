@@ -162,20 +162,23 @@ resource "aws_instance" "web" {
 
 ### 4.1 Luồng lấy credentials
 
+```mermaid
+sequenceDiagram
+    autonumber
+    actor EC2 as EC2 Instance
+    participant IMDS as IMDSv2<br/>(169.254.169.254)
+
+    Note over EC2, IMDS: Step 1: Lấy Session Token (PUT Request)
+    EC2->>+IMDS: PUT /latest/api/token (TTL: 21600s)
+    IMDS-->>-EC2: Trả về TOKEN
+
+    Note over EC2, IMDS: Step 2: Dùng Token để đọc credentials (GET Request)
+    EC2->>+IMDS: GET /latest/meta-data/iam/security-credentials/EC2-S3ReadRole<br/>[Header: X-aws-ec2-metadata-token: TOKEN]
+    IMDS-->>-EC2: Trả về Temp Credentials JSON
 ```
-EC2 Instance
-   │
-   │ Step 1: Lấy token (PUT request)
-   ▼
-http://169.254.169.254/latest/api/token
-   │ Response: TOKEN
-   │
-   │ Step 2: Dùng token đọc credentials (GET request)
-   ▼
-http://169.254.169.254/latest/meta-data/iam/security-credentials/EC2-S3ReadRole
-   │
-   │ Response:
-   ▼
+
+Ví dụ dữ liệu JSON trả về từ IMDSv2:
+```json
 {
   "Code": "Success",
   "LastUpdated": "2024-01-15T10:25:30Z",
@@ -183,7 +186,7 @@ http://169.254.169.254/latest/meta-data/iam/security-credentials/EC2-S3ReadRole
   "AccessKeyId": "ASIAIOSFODNN7EXAMPLE",
   "SecretAccessKey": "wJalrXUtnFEMI/...",
   "Token": "AQoDYXdzEJr...",
-  "Expiration": "2024-01-15T16:25:30Z"  ← Auto-renewed before expiry
+  "Expiration": "2024-01-15T16:25:30Z"  // Tự động gia hạn trước khi hết hạn
 }
 ```
 
