@@ -46,12 +46,25 @@ flowchart TD
 
 ## 2. Instance Types — Họ máy chủ
 
-```
-EC2 Instance Name Format:  m  6  g  .  2xlarge
-                           │  │  │      └── Size (nano/micro/.../48xlarge)
-                           │  │  └── Attributes (g=graviton, a=AMD, n=NVMe)
-                           │  └── Generation (số càng cao càng mới)
-                           └── Family (loại workload)
+```mermaid
+flowchart TD
+    subgraph Format ["EC2 Instance Name Format: m6g.2xlarge"]
+        direction LR
+        Family["m"] --- Generation["6"]
+        Generation --- Attributes["g"]
+        Attributes --- Separator["."]
+        Separator --- Size["2xlarge"]
+    end
+
+    Family_Desc["Family<br/>(Loại workload)"] -.-> Family
+    Gen_Desc["Generation<br/>(Thế hệ máy chủ)"] -.-> Generation
+    Attr_Desc["Attributes<br/>(g = Graviton, a = AMD, n = NVMe...)"] -.-> Attributes
+    Size_Desc["Size<br/>(Kích thước máy: nano...48xlarge)"] -.-> Size
+
+    style Family fill:#e6f7ff,stroke:#1890ff,stroke-width:1px
+    style Generation fill:#f9f0ff,stroke:#722ed1,stroke-width:1px
+    style Attributes fill:#fff7e6,stroke:#ffa940,stroke-width:1px
+    style Size fill:#f6ffed,stroke:#52c41a,stroke-width:1px
 ```
 
 | Family | Ví dụ | Tối ưu cho |
