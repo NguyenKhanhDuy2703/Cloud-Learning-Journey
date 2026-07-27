@@ -36,9 +36,34 @@ Dịch vụ cơ sở dữ liệu quan hệ được AWS quản lý tự động 
     *   Cơ chế sao chép là **không đồng bộ (Asynchronous Replication)**. Do đó, có khả năng xảy ra độ trễ sao chép (replication lag) trong các khoảng thời gian tải cao.
     *   Mỗi Read Replica chạy trên một EC2 và có ổ đĩa EBS riêng. Nếu DB chính sập, bạn có thể thăng cấp (promote) một Read Replica thành một database độc lập mới (nhưng có thể mất một phần dữ liệu do cơ chế không đồng bộ).
 
-<p align="center">
-  <img src="./assets/rds_read-replicas.gif" width="500"/>
-</p>
+```mermaid
+flowchart TD
+    subgraph VPC [VPC]
+        subgraph AZ_A [Availability Zone A]
+            Primary["Amazon RDS Primary (Read/Write)"]
+            EBS_Primary[("EBS Volume (Primary)")]
+            Primary <-->|Read/Write| EBS_Primary
+        end
+
+        subgraph AZ_B [Availability Zone B - Multi-AZ Standby]
+            Standby["Amazon RDS Standby (Standby)"]
+            EBS_Standby[("EBS Volume (Standby)")]
+            Standby <-->|Read/Write| EBS_Standby
+        end
+
+        subgraph AZ_C [Availability Zone C - Read Scaling]
+            Replica["RDS Read Replica (Read-only)"]
+            EBS_Replica[("EBS Volume (Replica)")]
+            Replica <-->|Read| EBS_Replica
+        end
+
+        Primary <-->|1. Sao chép đồng bộ\n(Synchronous Replication)| Standby
+        Primary -.->|2. Sao chép không đồng bộ\n(Asynchronous Replication)| Replica
+    end
+
+    User([Applications]) -->|Write/Read| Primary
+    User -.->|Read-only queries| Replica
+```
 <p align="center"><i> Hình 1: Cơ chế Read Replicas của Amazon RDS để giảm tải đọc </i></p>
 
 #### Amazon Aurora
@@ -100,9 +125,26 @@ Database dạng Key-Value chuẩn Serverless hàng đầu của AWS.
     *   **Giải quyết xung đột LWW (Last Writer Wins):** Nếu có 2 bản ghi trùng lặp diễn ra đồng thời ở 2 Region, DynamoDB dựa vào timestamp ở mức độ mili giây (mili-second timestamp) để giữ lại bản ghi mới nhất.
     *   **Đồng bộ phân tách phân vùng (Partition Auto-Split):** Khi dung lượng lưu trữ cục bộ lớn hơn 10 GB hoặc traffic vượt ngưỡng, DynamoDB tự động chia nhỏ phân vùng đĩa (Partition Split). Quá trình này tự động đồng bộ trên toàn bộ các Region để giữ hiệu năng đồng đều.
 
-<p align="center">
-  <img src="./assets/dynamodb_global-tables.gif" width="500"/>
-</p>
+```mermaid
+flowchart LR
+    subgraph Region_A [Region A: us-east-1]
+        Table_A[("DynamoDB Table (us-east-1)")]
+        Stream_A{{"DynamoDB Stream A"}}
+        Table_A -->|1. Ghi nhận thay đổi| Stream_A
+    end
+
+    subgraph Region_B [Region B: ap-southeast-1]
+        Table_B[("DynamoDB Table (ap-southeast-1)")]
+        Stream_B{{"DynamoDB Stream B"}}
+        Table_B -->|1. Ghi nhận thay đổi| Stream_B
+    end
+
+    Stream_A -.->|2. Sao chép không đồng bộ\n(Replication Agent)| Table_B
+    Stream_B -.->|2. Sao chép không đồng bộ\n(Replication Agent)| Table_A
+
+    Client_US([Client US]) -->|Write/Read| Table_A
+    Client_SG([Client SG]) -->|Write/Read| Table_B
+```
 <p align="center"><i> Hình 2: DynamoDB Global Tables - Cơ chế sao chép đa vùng Active-Active </i></p>
 
 #### Amazon DocumentDB (Document)
@@ -196,9 +238,22 @@ Khi cần dịch chuyển cơ sở dữ liệu từ On-premises hoặc các clou
     *   **Chức năng:** Thực hiện việc sao chép dữ liệu thực tế từ nguồn sang đích.
     *   **Ưu điểm:** Hỗ trợ tính năng di chuyển liên tục (Continuous Data Replication) bằng CDC (Change Data Capture). Database nguồn vẫn hoạt động bình thường trong suốt quá trình đồng bộ, giúp hệ thống đạt downtime gần như bằng 0 (Near-Zero Downtime) khi cắt chuyển (cutover).
 
-<p align="center">
-  <img src="./assets/DMS.png" width="500"/>
-</p>
+```mermaid
+flowchart TD
+    SourceDB[("Database Nguồn\n(On-Premises / Other Cloud)")]
+    TargetDB[("Database Đích trên AWS\n(RDS / Aurora)")]
+
+    subgraph MigrationTools [AWS Migration Tools]
+        SCT["AWS Schema Conversion Tool (SCT)\n(Chuyển đổi lược đồ / code)"]
+        DMS["AWS Database Migration Service (DMS)\n(Đồng bộ dữ liệu CDC)"]
+    end
+
+    SourceDB -->|1. Đọc Schema| SCT
+    SCT -->|2. Chuyển đổi & Áp dụng| TargetDB
+
+    SourceDB -->|3. Đọc dữ liệu & CDC| DMS
+    DMS -->|4. Ghi liên tục (Downtime gần bằng 0)| TargetDB
+```
 <p align="center"><i> Hình 3: Quy trình di chuyển cơ sở dữ liệu với AWS DMS </i></p>
 
 ---
