@@ -42,9 +42,9 @@ graph TD
         
         %% Tầng CSDL (Private Isolated Subnets)
         subgraph Private_Subnets_DB [Private Subnets - Database Tier]
-            RDS[(Amazon RDS Aurora - Multi-AZ)]
-            Cache[(Amazon ElastiCache Redis)]
-            Dynamo[(Amazon DynamoDB - VPC Endpoint)]
+            RDS[("Amazon RDS Aurora - Multi-AZ")]
+            Cache[("Amazon ElastiCache Redis")]
+            Dynamo[("Amazon DynamoDB - VPC Endpoint")]
         end
         
         Private_Subnets_App -->|6. Query Cached Data| Cache
@@ -83,14 +83,25 @@ graph TD
    - Tìm hiểu về các mô hình cloud, hạ tầng toàn cầu, Shared Responsibility Model và 6 trụ cột của Well-Architected Framework.
 2. **[Phase 2: Core Compute, Networking & IAM (Hạ tầng Máy chủ, Mạng & Định danh)](./02_Core_Compute_Networking_IAM/)**
    - Phân tích sâu mối liên kết cốt lõi giữa `VPC`, `EC2`, và `IAM` cùng các nguyên tắc bảo mật mạng/máy chủ.
+   - **Tài liệu chi tiết:**
+     - [🖥️ EC2 Deep Dive](./02_Core_Compute_Networking_IAM/EC2_DeepDive.md): Trạng thái máy chủ, Instance Types, Purchasing Options, Naming formats, AMI, IMDSv2, SG vs NACL.
+     - [💾 EC2 Storage Ecosystem](./02_Core_Compute_Networking_IAM/EC2_Storage_EBS_EFS_FSx.md): Block vs File Storage, EBS Volumes/Snapshots, EFS Multi-AZ, FSx for Windows/Lustre.
+     - [🔐 IAM Role & EC2 Integration](./02_Core_Compute_Networking_IAM/IAM_Role_EC2_Integration.md): Luồng credentials tạm qua STS & Instance Profile, Cross-Account assumption.
+     - [⚖️ AutoScaling & Load Balancers](./02_Core_Compute_Networking_IAM/AutoScaling_ALB_NLB.md): ALB vs NLB, ASG Scaling policies, Target Group, Connection Draining.
 3. **[Phase 3: Storage, Content Delivery & SES (Lưu trữ, CDN & Email)](./03_Storage_ContentDelivery_SES/)**
    - Phân tích sâu luồng phân phối nội dung tĩnh/động kết hợp `S3`, `CloudFront`, `Route 53`, `SES` và giám sát qua `CloudWatch`.
+   - **Tài liệu chi tiết:**
+     - [🗄️ S3 Storage Classes & Cost Optimization](./03_Storage_ContentDelivery_SES/S3_Storage_Classes.md): Phân loại S3 classes, Intelligent-Tiering, Lifecycle policies.
 4. **[Phase 4: Databases & Caching (Cơ sở dữ liệu & Bộ nhớ đệm)](./04_Databases_Caching/)**
    - Tìm hiểu cách tối ưu hóa tầng dữ liệu thông qua sự kết hợp của `RDS`, `DynamoDB`, `ElastiCache` và các mẫu thiết kế cache.
+   - **Tài liệu chi tiết:**
+     - [📊 Database Services & Migration](./04_Databases_Caching/database_service.md): So sánh RDS vs Aurora, DynamoDB (Global Tables) vs DocumentDB (Primary Keys), SCT & DMS.
 5. **[Phase 5: Containers & Serverless (Container & Điện toán Không máy chủ)](./05_Containers_Serverless/)**
    - Phân tích cơ chế hoạt động và tích hợp các dịch vụ hiện đại: `ECR`, `ECS`, `EKS`, `Fargate`, `Lambda`, và `API Gateway`.
 6. **[Phase 6: Multi-Account Governance & Global Traffic (Quản trị Đa tài khoản & Điều phối Lưu lượng)](./06_MultiAccount_Governance_Global_DNS/)**
    - Phân tích tầng điều khiển: `AWS Organizations` (SCP/RCP), `IAM` (Policy Evaluation, Permissions Boundary, Identity Center) và `Route 53` (DNS tập trung, Latency Routing) trong kiến trúc multi-account.
+   - **Tài liệu chi tiết:**
+     - [🌐 Route 53 & Routing Policies](./06_MultiAccount_Governance_Global_DNS/Route53_DeepDive.md): Hosted Zones (Public vs Private), CNAME vs Alias, Routing policies, Health check.
 7. **[Phase 7: Observability & Incident Response (Quan sát Hệ thống & Xử lý Sự cố)](./07_Observability_Incident_Response/)**
    - Ba trụ cột Metrics/Logs/Traces với `CloudWatch`, `X-Ray`, `CloudTrail`, `EventBridge` — và quy trình chẩn đoán sự cố trong hệ thống phân tán.
 8. **[Phase 8: IaC, CI/CD & Deployment Automation (Hạ tầng dưới dạng Mã & Tự động hóa)](./08_IaC_CICD_Automation/)**
