@@ -11,16 +11,16 @@
 flowchart TD
     Start([Bắt đầu: Chọn EC2 Storage]) --> Single{"Cần gắn vào 1 EC2 duy nhất?"}
     
-    Single -->|YES| EBS["EBS (Elastic Block Store)\n- Block Storage (1-to-1)\n- gp3, io2, st1, sc1"]
+    Single -->|"YES"| EBS["EBS (Elastic Block Store)<br/>- Block Storage (1-to-1)<br/>- gp3, io2, st1, sc1"]
     
-    Single -->|NO| Multi{"Cần nhiều EC2 cùng đọc/ghi (Shared)?"}
+    Single -->|"NO"| Multi{"Cần nhiều EC2 cùng đọc/ghi (Shared)?"}
     
-    Multi -->|YES| FSType{"Sử dụng hệ điều hành / giao thức gì?"}
-    FSType -->|Linux - NFS| EFS["Amazon EFS\n- Shared File Storage"]
-    FSType -->|Windows - SMB| FSxWin["FSx for Windows\n- Shared File Storage"]
-    FSType -->|HPC / Lustre| FSxLustre["FSx for Lustre\n- High-performance storage"]
+    Multi -->|"YES"| FSType{"Sử dụng hệ điều hành / giao thức gì?"}
+    FSType -->|"Linux - NFS"| EFS["Amazon EFS<br/>- Shared File Storage"]
+    FSType -->|"Windows - SMB"| FSxWin["FSx for Windows<br/>- Shared File Storage"]
+    FSType -->|"HPC / Lustre"| FSxLustre["FSx for Lustre<br/>- High-performance storage"]
     
-    Multi -->|NO| S3["Amazon S3\n- Object Storage\n- Tần suất truy cập thấp / Lưu trữ tĩnh"]
+    Multi -->|"NO"| S3["Amazon S3<br/>- Object Storage<br/>- Tần suất truy cập thấp / Lưu trữ tĩnh"]
 ```
 
 | Tiêu chí | EBS | EFS | FSx |
