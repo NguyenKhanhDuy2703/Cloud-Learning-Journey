@@ -57,8 +57,8 @@ flowchart TD
             Replica <-->|Read| EBS_Replica
         end
 
-        Primary <-->|1. Sao chép đồng bộ\n(Synchronous Replication)| Standby
-        Primary -.->|2. Sao chép không đồng bộ\n(Asynchronous Replication)| Replica
+        Primary <-->|"1. Sao chép đồng bộ\n(Synchronous Replication)"| Standby
+        Primary -.->|"2. Sao chép không đồng bộ\n(Asynchronous Replication)"| Replica
     end
 
     User([Applications]) -->|Write/Read| Primary
@@ -139,8 +139,8 @@ flowchart LR
         Table_B -->|1. Ghi nhận thay đổi| Stream_B
     end
 
-    Stream_A -.->|2. Sao chép không đồng bộ\n(Replication Agent)| Table_B
-    Stream_B -.->|2. Sao chép không đồng bộ\n(Replication Agent)| Table_A
+    Stream_A -.->|"2. Sao chép không đồng bộ\n(Replication Agent)"| Table_B
+    Stream_B -.->|"2. Sao chép không đồng bộ\n(Replication Agent)"| Table_A
 
     Client_US([Client US]) -->|Write/Read| Table_A
     Client_SG([Client SG]) -->|Write/Read| Table_B
@@ -252,7 +252,7 @@ flowchart TD
     SCT -->|2. Chuyển đổi & Áp dụng| TargetDB
 
     SourceDB -->|3. Đọc dữ liệu & CDC| DMS
-    DMS -->|4. Ghi liên tục (Downtime gần bằng 0)| TargetDB
+    DMS -->|"4. Ghi liên tục (Downtime gần bằng 0)"| TargetDB
 ```
 <p align="center"><i> Hình 3: Quy trình di chuyển cơ sở dữ liệu với AWS DMS </i></p>
 
