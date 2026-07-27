@@ -32,12 +32,12 @@ s3 = boto3.client('s3',
 
 ```mermaid
 flowchart TD
-    EC2["EC2 Instance"] -->|1. Request Credentials| IMDS["IMDSv2 (169.254.169.254)"]
-    IMDS -->|2. Gọi STS để tạo| STS["AWS Security Token Service (STS)"]
-    STS -->|3. Trả về Temp Credentials\n(AccessKeyId, SecretKey, SessionToken, Expiry 6h)| EC2
-    EC2 -->|4. Sử dụng AssumeRole| Role["IAM Role (gắn qua Instance Profile)"]
-    Role -->|5. Thừa hưởng quyền| Policy["IAM Policy (e.g., S3 Read Only)"]
-    Policy -->|6. Truy cập an toàn| AWSService["AWS Services (S3, DynamoDB, SSM...)"]
+    EC2["EC2 Instance"] -->|"1. Request Credentials"| IMDS["IMDSv2 (169.254.169.254)"]
+    IMDS -->|"2. Gọi STS để tạo"| STS["AWS Security Token Service (STS)"]
+    STS -->|"3. Trả về Temp Credentials\n(AccessKeyId, SecretKey, SessionToken, Expiry 6h)"| EC2
+    EC2 -->|"4. Sử dụng AssumeRole"| Role["IAM Role (gắn qua Instance Profile)"]
+    Role -->|"5. Thừa hưởng quyền"| Policy["IAM Policy (e.g., S3 Read Only)"]
+    Policy -->|"6. Truy cập an toàn"| AWSService["AWS Services (S3, DynamoDB, SSM...)"]
 
     style STS fill:#fff7e6,stroke:#ffa940,stroke-width:2px
     style EC2 fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
@@ -389,10 +389,10 @@ flowchart TD
 
     STS["AWS Security Token Service (STS)"]
 
-    EC2 -->|1. Gọi sts:AssumeRole (Role B)| STS
-    STS -->|2. Trả về Temp Credentials của Role B| EC2
-    EC2 -->|3. Dùng Temp Credentials truy cập| S3_B
-    Role_B -->|Ủy quyền truy cập| S3_B
+    EC2 -->|"1. Gọi sts:AssumeRole (Role B)"| STS
+    STS -->|"2. Trả về Temp Credentials của Role B"| EC2
+    EC2 -->|"3. Dùng Temp Credentials truy cập"| S3_B
+    Role_B -->|"Ủy quyền truy cập"| S3_B
 
     style EC2 fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
     style Role_B fill:#f9f0ff,stroke:#722ed1,stroke-width:2px
