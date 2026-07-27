@@ -1,0 +1,8 @@
+streamlit
+boto3
+python-dotenv
+numpy
+PyPDF2
+requests
+beautifulsoup4
+urllib3

@@ -1,0 +1,137 @@
+.feedback-panel {
+  min-height: 200px;
+}
+
+.analyzing-message,
+.no-feedback-message {
+  padding: 2rem;
+  text-align: center;
+  font-size: 1.125rem;
+  color: #666;
+  font-style: italic;
+}
+
+.star-analysis {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #000;
+}
+
+.star-analysis h3 {
+  margin-bottom: 1.5rem;
+}
+
+.star-components {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.star-component {
+  padding: 1rem;
+  border: 2px solid #000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.star-component.present {
+  background-color: #f9f9f9;
+}
+
+.star-component.missing {
+  background-color: #fff;
+  opacity: 0.6;
+}
+
+.component-indicator {
+  font-size: 1.5rem;
+  font-weight: bold;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.star-component.present .component-indicator {
+  color: #000;
+}
+
+.star-component.missing .component-indicator {
+  color: #999;
+}
+
+.component-name {
+  font-weight: 600;
+  font-size: 1.125rem;
+  display: inline-block;
+}
+
+.component-content {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #333;
+}
+
+.feedback-section {
+  margin-bottom: 2rem;
+}
+
+.feedback-section h3 {
+  margin-bottom: 1rem;
+  font-size: 1.125rem;
+}
+
+.feedback-section ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.feedback-section li {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.strengths-section {
+  padding: 1.5rem;
+  background-color: #f9f9f9;
+  border: 2px solid #000;
+}
+
+.improvements-section {
+  padding: 1.5rem;
+  border: 2px solid #000;
+}
+
+.tips-section {
+  padding: 1.5rem;
+  background-color: #f5f5f5;
+  border: 2px solid #000;
+}
+
+.filler-words-section {
+  padding: 1.5rem;
+  border: 2px solid #000;
+  background-color: #fff9e6;
+}
+
+.filler-count {
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.filler-examples {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  font-size: 0.875rem;
+}
+
+.filler-tip {
+  margin: 1rem 0 0 0;
+  font-size: 0.875rem;
+  font-style: italic;
+  color: #555;
+}

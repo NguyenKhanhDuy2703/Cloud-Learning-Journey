@@ -1,0 +1,8 @@
+streamlit
+strands-agents
+strands-agents-tools
+python-dotenv
+mcp
+boto3
+bedrock-agentcore-starter-toolkit
+uv

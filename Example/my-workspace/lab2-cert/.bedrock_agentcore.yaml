@@ -1,0 +1,62 @@
+default_agent: study_guide_agent_complete
+agents:
+  study_guide_agent_complete:
+    name: study_guide_agent_complete
+    language: python
+    node_version: '20'
+    entrypoint: D:/Cloud_AWS/Cloud-Learning-Journey/Example/my-workspace/lab2-cert/study_guide_agent_complete.py
+    deployment_type: container
+    runtime_type: null
+    platform: linux/arm64
+    container_runtime: none
+    source_path: D:\Cloud_AWS\Cloud-Learning-Journey\Example\my-workspace\lab2-cert
+    aws:
+      execution_role: arn:aws:iam::875872621135:role/AmazonBedrockAgentCoreSDKRuntime-us-east-1-02cfd71d57
+      execution_role_auto_create: false
+      account: '875872621135'
+      region: us-east-1
+      ecr_repository: 875872621135.dkr.ecr.us-east-1.amazonaws.com/bedrock-agentcore-study_guide_agent_complete
+      ecr_auto_create: false
+      s3_path: null
+      s3_auto_create: false
+      network_configuration:
+        network_mode: PUBLIC
+        network_mode_config: null
+      protocol_configuration:
+        server_protocol: HTTP
+      observability:
+        enabled: true
+      lifecycle_configuration:
+        idle_runtime_session_timeout: null
+        max_lifetime: null
+    bedrock_agentcore:
+      agent_id: study_guide_agent_complete-KSu0QT26Dt
+      agent_arn: arn:aws:bedrock-agentcore:us-east-1:875872621135:runtime/study_guide_agent_complete-KSu0QT26Dt
+      agent_session_id: 9fc26b82-e5f1-4f95-96b4-374fa3a9d705
+    codebuild:
+      project_name: bedrock-agentcore-study_guide_agent_complete-builder
+      execution_role: arn:aws:iam::875872621135:role/AmazonBedrockAgentCoreSDKCodeBuild-us-east-1-02cfd71d57
+      source_bucket: bedrock-agentcore-codebuild-sources-875872621135-us-east-1
+    memory:
+      mode: STM_ONLY
+      memory_id: study_guide_agent_complete_mem-2xxrtbBAWy
+      memory_arn: arn:aws:bedrock-agentcore:us-east-1:875872621135:memory/study_guide_agent_complete_mem-2xxrtbBAWy
+      memory_name: study_guide_agent_complete_mem
+      event_expiry_days: 30
+      first_invoke_memory_check_done: true
+      was_created_by_toolkit: true
+    identity:
+      credential_providers: []
+      workload: null
+    aws_jwt:
+      enabled: false
+      audiences: []
+      signing_algorithm: ES384
+      issuer_url: null
+      duration_seconds: 300
+    authorizer_configuration: null
+    request_header_configuration: null
+    oauth_configuration: null
+    api_key_env_var_name: null
+    api_key_credential_provider_name: null
+    is_generated_by_agentcore_create: false

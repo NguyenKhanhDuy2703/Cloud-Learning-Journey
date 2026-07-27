@@ -5,3 +5,5 @@ venv_311/
 .venv/
 .agents/
 .claude/
+Example/my-workspace/.git_backup
+**/__pycache__/

@@ -1,0 +1,28 @@
+.question-display {
+  min-height: 150px;
+}
+
+.question-content {
+  margin-bottom: 1.5rem;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.question-text {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin: 0;
+  font-weight: 500;
+}
+
+.question-placeholder {
+  font-size: 1rem;
+  color: #666;
+  margin: 0;
+  font-style: italic;
+}
+
+.generate-button {
+  min-width: 180px;
+}
