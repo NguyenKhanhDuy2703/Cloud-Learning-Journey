@@ -66,6 +66,10 @@ flowchart TD
 ```
 <p align="center"><i> Hình 1: Cơ chế Read Replicas của Amazon RDS để giảm tải đọc </i></p>
 
+> [!TIP]
+> **Xem ảnh động minh họa (GIF):**
+> ![Amazon RDS Read Replicas Mechanism](assets/rds_read-replicas.gif)
+
 #### Amazon Aurora
 Giải pháp cơ sở dữ liệu quan hệ cao cấp thế hệ mới, được AWS thiết kế tối ưu hóa 100% cho môi trường đám mây (Cloud-Native), tương thích hoàn toàn với MySQL và PostgreSQL.
 
@@ -146,6 +150,10 @@ flowchart LR
     Client_SG([Client SG]) -->|Write/Read| Table_B
 ```
 <p align="center"><i> Hình 2: DynamoDB Global Tables - Cơ chế sao chép đa vùng Active-Active </i></p>
+
+> [!TIP]
+> **Xem ảnh động minh họa (GIF):**
+> ![Amazon DynamoDB Global Tables Replication](assets/dynamodb_global-tables.gif)
 
 #### Amazon DocumentDB (Document)
 Dịch vụ lưu trữ dữ liệu dưới dạng tài liệu JSON-like, tương thích hoàn toàn với MongoDB API.
@@ -255,6 +263,10 @@ flowchart TD
     DMS -->|"4. Ghi liên tục (Downtime gần bằng 0)"| TargetDB
 ```
 <p align="center"><i> Hình 3: Quy trình di chuyển cơ sở dữ liệu với AWS DMS </i></p>
+
+> [!TIP]
+> **Xem sơ đồ quy trình chi tiết (PNG):**
+> ![AWS Database Migration Service Workflow](assets/DMS.png)
 
 ---
 
