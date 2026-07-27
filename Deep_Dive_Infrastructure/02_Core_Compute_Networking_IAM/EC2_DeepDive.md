@@ -8,32 +8,27 @@
 
 EC2 là máy chủ ảo (Virtual Machine) chạy trên hạ tầng vật lý của AWS. Điểm mấu chốt cần nắm là **trạng thái ảnh hưởng trực tiếp đến chi phí và dữ liệu**.
 
-```
-                  Launch
-                    │
-                    ▼
-              ┌──────────┐
-              │  Pending  │  ← Không bị charge
-              └────┬─────┘
-                   │
-                   ▼
-              ┌──────────┐
-    ┌────────►│ Running  │◄────────┐  ← Bị charge toàn bộ (CPU + RAM + Network)
-    │         └────┬─────┘         │
-    │              │                │
-    │         Stop │         Start  │
-    │              ▼                │
-    │         ┌──────────┐          │
-    │         │ Stopped  │──────────┘  ← Chỉ charge EBS, không charge CPU/RAM
-    │         └────┬─────┘
-    │              │ Terminate
-    │              ▼
-    │         ┌──────────┐
-    │         │Terminated│  ← Xóa vĩnh viễn, không khôi phục được
-    │         └──────────┘
-    │
-    │ Hibernate (Save RAM to EBS, resume nhanh)
-    └──────────────────────────────────────────
+```mermaid
+flowchart TD
+    Launch([Launch Instance]) --> Pending["Pending\n(Chờ khởi động)"]
+    Pending --> Running["Running\n(Đang chạy)"]
+    Running -->|"Stop (Dừng máy)"| Stopped["Stopped\n(Đã dừng)"]
+    Stopped -->|"Start (Khởi động lại)"| Running
+    Running -->|"Terminate (Xóa máy)"| Terminated["Terminated\n(Đã hủy vĩnh viễn)"]
+    Stopped -->|"Terminate (Xóa máy)"| Terminated
+    Running -->|"Hibernate (Ngủ đông)"| Stopped
+
+    %% Notes
+    note1["Không tính phí VM\n(Chờ cấp tài nguyên)"] .-> Pending
+    note2["Tính phí đầy đủ:\nCPU, RAM, EBS, Elastic IP"] .-> Running
+    note3["Chỉ tính phí lưu trữ EBS\n(Không tính CPU/RAM)"] .-> Stopped
+    note4["Xóa sạch tài nguyên VM\nNgừng tính phí hoàn toàn"] .-> Terminated
+
+    style Launch fill:#f5f5f5,stroke:#d9d9d9,stroke-width:2px
+    style Pending fill:#fff7e6,stroke:#ffa940,stroke-width:2px
+    style Running fill:#f6ffed,stroke:#52c41a,stroke-width:2px
+    style Stopped fill:#fff1f0,stroke:#f5222d,stroke-width:2px
+    style Terminated fill:#f5f5f5,stroke:#bfbfbf,stroke-width:2px
 ```
 
 ### So sánh Stop vs Terminate vs Hibernate
@@ -72,21 +67,26 @@ EC2 Instance Name Format:  m  6  g  .  2xlarge
 
 ## 3. Purchasing Options — Chiến lược giá
 
-```
-On-Demand ──────── Giá cao nhất, linh hoạt nhất, không cam kết
-     │
-     ├── Reserved Instances (RI) ────── Cam kết 1/3 năm → giảm 40-72%
-     │        ├── Standard RI: cam kết instance type cụ thể
-     │        └── Convertible RI: đổi được instance type
-     │
-     ├── Savings Plans ──────────────── Cam kết $ spend/giờ → giảm đến 66%
-     │        ├── Compute SP: linh hoạt nhất (cross-family, cross-region)
-     │        └── EC2 Instance SP: ít linh hoạt hơn, discount cao hơn
-     │
-     ├── Spot Instances ─────────────── Rẻ nhất (90% off), nhưng có thể bị thu hồi
-     │        └── Cảnh báo 2 phút trước khi terminate
-     │
-     └── Dedicated Hosts/Instances ──── Máy chủ vật lý dành riêng (compliance)
+```mermaid
+flowchart LR
+    Root["Purchasing Options"] --> OD["On-Demand\n- Giá cao nhất, linh hoạt nhất\n- Không cam kết"]
+    Root --> RI["Reserved Instances (RI)\n- Cam kết 1 hoặc 3 năm\n- Giảm 40-72%"]
+    RI --> RI_Std["Standard RI\n- Cam kết instance type cố định"]
+    RI --> RI_Conv["Convertible RI\n- Có thể đổi instance type"]
+    
+    Root --> SP["Savings Plans\n- Cam kết chi tiêu ($ spend/giờ)\n- Giảm đến 66%"]
+    SP --> SP_Comp["Compute SP\n- Linh hoạt nhất (cross-family, region)"]
+    SP --> SP_EC2["EC2 Instance SP\n- Discount cao nhất, cố định instance type"]
+    
+    Root --> Spot["Spot Instances\n- Tiết kiệm nhất (giảm đến 90%)\n- Có thể bị thu hồi (cảnh báo 2 phút)"]
+    
+    Root --> Dedicated["Dedicated Hosts / Instances\n- Máy chủ vật lý dành riêng\n- Đáp ứng compliance"]
+
+    style Root fill:#f9f0ff,stroke:#722ed1,stroke-width:2px
+    style OD fill:#f5f5f5,stroke:#d9d9d9,stroke-width:1px
+    style RI fill:#e6f7ff,stroke:#1890ff,stroke-width:1px
+    style SP fill:#fff7e6,stroke:#ffa940,stroke-width:1px
+    style Spot fill:#fff1f0,stroke:#f5222d,stroke-width:1px
 ```
 
 ### Khi nào dùng gì?
@@ -169,14 +169,22 @@ curl -H "X-aws-ec2-metadata-token: $TOKEN" \
 | Rule type | Allow only | Allow + Deny |
 | Số rules | 60 inbound + 60 outbound | Unlimited |
 
-```
-Stateful Security Group:
-  Request vào Port 80 → ALLOWED
-  Response ra Port 54321 → TỰ ĐỘNG ALLOWED (không cần rule)
+```mermaid
+flowchart TD
+    subgraph SG [Stateful Security Group (ENI Level)]
+        direction TB
+        Client1([Client]) -->|"Inbound: Allow Port 80"| Instance1["EC2 Instance"]
+        Instance1 -->|"Outbound Response: Tự động ALLOWED\n(Không cần Outbound rule)"| Client1
+    end
 
-Stateless NACL:
-  Request vào Port 80 → cần rule inbound ALLOW
-  Response ra Port 54321 → cần rule outbound ALLOW riêng!
+    subgraph NACL [Stateless NACL (Subnet Level)]
+        direction TB
+        Client2([Client]) -->|"1. Inbound: Cần Rule ALLOW Port 80"| Subnet["Subnet Instances"]
+        Subnet -->|"2. Outbound: BẮT BUỘC có Rule ALLOW Port 1024-65535"| Client2
+    end
+
+    style SG fill:#f6ffed,stroke:#52c41a,stroke-width:2px
+    style NACL fill:#fff1f0,stroke:#f5222d,stroke-width:2px
 ```
 
 ---
