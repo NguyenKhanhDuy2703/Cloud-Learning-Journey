@@ -25,6 +25,34 @@
       "skillPath": "gitops-workflows/skills/SKILL.md",
       "computedHash": "8b8691441938ddfcfdae1828ab9c465611eac475c944e2ca3022afd3dcdd24a4"
     },
+    "grafana": {
+      "source": "KhaiTrang1995/agentic-awesome-kits",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "kits/devops/grafana-kit/.claude/skills/grafana/SKILL.md",
+      "computedHash": "8e86ef4da034cd733f4c585e4b0910b75018961a1d72a6f64d2bb7a582202e00"
+    },
+    "grafana-alert": {
+      "source": "KhaiTrang1995/agentic-awesome-kits",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "kits/devops/grafana-kit/.claude/skills/grafana-alert/SKILL.md",
+      "computedHash": "bb9b07cb116a441481a1b38105a56a082433f0b301042d35ac0e2b4f8347f4b0"
+    },
+    "grafana-dashboard": {
+      "source": "KhaiTrang1995/agentic-awesome-kits",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "kits/devops/grafana-kit/.claude/skills/grafana-dashboard/SKILL.md",
+      "computedHash": "97fe8136d43d859af92b3e4fb283f9e8e5afb084a086b3678d4497bf2374aaa8"
+    },
+    "grafana-explore": {
+      "source": "KhaiTrang1995/agentic-awesome-kits",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "kits/devops/grafana-kit/.claude/skills/grafana-explore/SKILL.md",
+      "computedHash": "49724f44ae4b084260012a57c9f778175750f6e3775b54b67375acf4fb09f299"
+    },
     "iac-terraform": {
       "source": "ahmedasmar/devops-claude-skills",
       "sourceType": "github",
@@ -36,6 +64,13 @@
       "sourceType": "github",
       "skillPath": "k8s-troubleshooter/skills/SKILL.md",
       "computedHash": "b6cc39c1c93db21caf9663d8daee30122c06017df5366a431c19244d661b45db"
+    },
+    "loki-query": {
+      "source": "KhaiTrang1995/agentic-awesome-kits",
+      "ref": "main",
+      "sourceType": "github",
+      "skillPath": "kits/devops/grafana-kit/.claude/skills/loki-query/SKILL.md",
+      "computedHash": "07587972a61083cee0f8ca5690f7baaf431035491e3fb0690b7099bdba26fce9"
     },
     "monitoring-observability": {
       "source": "ahmedasmar/devops-claude-skills",
