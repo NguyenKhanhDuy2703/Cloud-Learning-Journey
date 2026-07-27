@@ -41,22 +41,25 @@ flowchart TD
 
 ### 2.1 Kiến trúc & Cơ chế hoạt động
 
-```
-EC2 Instance (AZ: ap-southeast-1a)
-     │
-     │ Kết nối qua mạng AWS nội bộ (low-latency)
-     │
-     ▼
-┌─────────────────────────────┐
-│        EBS Volume           │
-│  ┌─────────────────────┐    │
-│  │  Data Blocks        │    │  Replicated within AZ
-│  │  (512B - 128KB/IO)  │    │  (tự động replicate nội bộ AZ)
-│  └─────────────────────┘    │
-└─────────────────────────────┘
-     │ Snapshot (incremental)
-     ▼
-   Amazon S3 (cross-AZ durable storage)
+```mermaid
+flowchart TD
+    subgraph AZ_A ["Availability Zone (ap-southeast-1a)"]
+        EC2["EC2 Instance"]
+        
+        subgraph EBS ["Amazon EBS Volume"]
+            DataBlocks["Data Blocks<br/>(512B - 128KB/IO)"]
+        end
+        
+        EC2 <-->|"Kết nối qua mạng AWS nội bộ (low-latency)"| EBS
+        EBS -.->|"Tự động sao chép (Replicated within AZ)"| EBS_Replica["Bản sao nội bộ AZ<br/>(Độ sẵn sàng cao)"]
+    end
+
+    S3[("Amazon S3<br/>(Cross-AZ durable storage)")]
+    EBS -->|"Snapshot (incremental)"| S3
+
+    style EC2 fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
+    style EBS fill:#f9f0ff,stroke:#722ed1,stroke-width:2px
+    style S3 fill:#f6ffed,stroke:#52c41a,stroke-width:2px
 ```
 
 **Key facts:**
@@ -132,22 +135,30 @@ Cách bật:
 
 ### 3.1 Kiến trúc Multi-AZ
 
-```
-                    ┌─────────────────────────────────────────┐
-                    │           Amazon EFS                    │
-                    │  (File system, tự co giãn, pay-per-use) │
-                    └────────┬──────────────┬─────────────────┘
-                             │              │
-              Mount Target   │              │  Mount Target
-              (AZ 1a ENI)    │              │  (AZ 1b ENI)
-                             │              │
-           ┌─────────────────┘              └─────────────────┐
-           ▼                                                   ▼
-  ┌────────────────┐                               ┌────────────────┐
-  │ EC2 Instances  │                               │ EC2 Instances  │
-  │ (AZ 1a)        │ ◄──── Shared /mnt/efs ───► │ (AZ 1b)        │
-  │ mount via NFS  │                               │ mount via NFS  │
-  └────────────────┘                               └────────────────┘
+```mermaid
+flowchart TD
+    EFS["Amazon EFS<br/>(File system, tự co giãn, pay-per-use)"]
+    
+    subgraph AZ_1a ["Availability Zone 1a"]
+        Mount1["Mount Target<br/>(AZ 1a ENI)"]
+        EC2_1a["EC2 Instances (AZ 1a)<br/>mount via NFS"]
+        Mount1 --> EC2_1a
+    end
+
+    subgraph AZ_1b ["Availability Zone 1b"]
+        Mount2["Mount Target<br/>(AZ 1b ENI)"]
+        EC2_1b["EC2 Instances (AZ 1b)<br/>mount via NFS"]
+        Mount2 --> EC2_1b
+    end
+
+    EFS -->|"Kết nối"| Mount1
+    EFS -->|"Kết nối"| Mount2
+    
+    EC2_1a <-->|"Shared /mnt/efs"| EC2_1b
+
+    style EFS fill:#fff7e6,stroke:#ffa940,stroke-width:2px
+    style EC2_1a fill:#e6f7ff,stroke:#1890ff,stroke-width:1px
+    style EC2_1b fill:#e6f7ff,stroke:#1890ff,stroke-width:1px
 ```
 
 ### 3.2 Performance Modes
@@ -167,16 +178,16 @@ Cách bật:
 
 ### 3.4 Storage Classes (Lifecycle)
 
-```
-EFS Lifecycle Management (giống S3 Intelligent-Tiering):
+```mermaid
+flowchart TD
+    Std["EFS Standard<br/>(Truy cập thường xuyên - $0.30/GB-month)"]
+    IA["EFS Standard-IA (Infrequent Access)<br/>(Ít truy cập - $0.025/GB-month + phí truy xuất)"]
 
-  Files accessed recently → EFS Standard  ($0.30/GB-month)
-           │ Không access trong N ngày
-           ▼
-       EFS Standard-IA (Infrequent Access)  ($0.025/GB-month + retrieval fee)
-           │ Access lại
-           ▼
-       Tự động move về Standard
+    Std -->|"Không access trong N ngày (chuyển đổi tự động)"| IA
+    IA -->|"Khi có truy cập đọc/ghi lại"| Std
+
+    style Std fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
+    style IA fill:#fff7e6,stroke:#ffa940,stroke-width:2px
 ```
 
 ### 3.5 Mount EC2 vào EFS
@@ -198,23 +209,20 @@ fs-0123456789abcdef0:/ /mnt/efs efs defaults,_netdev,tls 0 0
 
 ### 4.1 FSx for Windows File Server
 
-```
-Use Case: Windows workloads cần SMB protocol + Active Directory integration
+```mermaid
+flowchart TD
+    Client["Windows EC2 / On-premises Windows"]
+    
+    subgraph FSx_Cluster ["FSx for Windows Server (Multi-AZ Deployment)"]
+        ActiveFS["Primary File Server<br/>- Active Directory Auth<br/>- DFS Namespaces<br/>- Windows ACLs<br/>- Shadow Copies (VSS)"]
+        StandbyFS["Standby File Server<br/>(Automatic Failover)"]
+        ActiveFS -.->|"Sao chép Multi-AZ"| StandbyFS
+    end
 
-Architecture:
-  Windows EC2 / On-premises Windows 
-       │
-       │ SMB protocol (port 445)
-       ▼
-  ┌──────────────────────────────┐
-  │    FSx for Windows Server    │
-  │  ├── Active Directory Auth   │
-  │  ├── DFS Namespaces          │
-  │  ├── Windows ACLs            │
-  │  └── Shadow Copies (VSS)     │
-  └──────────────────────────────┘
-       │ Multi-AZ deployment
-       └── Standby file server (automatic failover)
+    Client -->|"SMB protocol (port 445)"| ActiveFS
+
+    style ActiveFS fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
+    style StandbyFS fill:#fff1f0,stroke:#f5222d,stroke-width:2px
 ```
 
 **Key specs:**
@@ -225,24 +233,20 @@ Architecture:
 
 ### 4.2 FSx for Lustre
 
-```
-Use Case: High-Performance Computing, ML Training, Financial Modeling
+```mermaid
+flowchart TD
+    S3[("Amazon S3 Bucket<br/>(Data Source)")]
+    
+    FSx["FSx for Lustre<br/>(POSIX-compliant parallel file system)<br/>- Sub-millisecond latency<br/>- GB/s throughput"]
+    
+    Compute["EC2 GPU Instances (p3/p4/g5)<br/>/ SageMaker Training Jobs"]
 
-Architecture:
-  S3 Bucket (data source)
-       │ Lazy loading / pre-loading
-       ▼
-  ┌────────────────────────────┐
-  │      FSx for Lustre        │
-  │  POSIX-compliant parallel  │
-  │  file system               │
-  │  ├── Sub-millisecond lat.  │
-  │  └── GB/s throughput       │
-  └────────────────────────────┘
-       │ POSIX / Lustre client
-       ▼
-  EC2 (GPU instances p3/p4/g5)
-  SageMaker Training Jobs
+    S3 -->|"Lazy loading / pre-loading"| FSx
+    FSx -->|"POSIX / Lustre client (tốc độ cao)"| Compute
+
+    style S3 fill:#f6ffed,stroke:#52c41a,stroke-width:2px
+    style FSx fill:#f9f0ff,stroke:#722ed1,stroke-width:2px
+    style Compute fill:#e6f7ff,stroke:#1890ff,stroke-width:2px
 ```
 
 **Key specs:**
