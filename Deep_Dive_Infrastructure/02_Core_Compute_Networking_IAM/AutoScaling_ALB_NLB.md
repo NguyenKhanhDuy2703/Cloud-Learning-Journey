@@ -1,4 +1,4 @@
-# ⚖️ Auto Scaling & Load Balancing — EC2 Scaling Ecosystem
+# Auto Scaling & Load Balancing — EC2 Scaling Ecosystem
 
 > **ASG + ALB/NLB** là bộ đôi không thể tách rời trong mọi production architecture.  
 > ASG quyết định **bao nhiêu** EC2 chạy; Load Balancer quyết định **traffic đi đâu**.
@@ -7,35 +7,27 @@
 
 ## 1. Big Picture — Luồng traffic hoàn chỉnh
 
-```
-Internet
-   │
-   ▼
-Route 53 (DNS)
-   │
-   ▼
-CloudFront (CDN) ─── tùy chọn
-   │
-   ▼
-┌──────────────────────────────────────────────────────────┐
-│  VPC                                                     │
-│  ┌────────────────────────────────────────────────────┐  │
-│  │  Public Subnets (cross-AZ)                         │  │
-│  │  ┌────────────────────────────────────────────┐    │  │
-│  │  │  Application Load Balancer (ALB)           │    │  │
-│  │  │  [Listener: HTTPS:443] → [Target Group]    │    │  │
-│  │  └──────────────┬─────────────────────────────┘    │  │
-│  └─────────────────┼──────────────────────────────────┘  │
-│                    │ Forward to healthy targets           │
-│  ┌─────────────────▼──────────────────────────────────┐  │
-│  │  Auto Scaling Group (spans AZs)                     │  │
-│  │  ┌─────────────────┐  ┌─────────────────┐           │  │
-│  │  │   AZ 1a          │  │   AZ 1b          │          │  │
-│  │  │  EC2 EC2 EC2    │  │  EC2 EC2 EC2    │           │  │
-│  │  └─────────────────┘  └─────────────────┘           │  │
-│  └─────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────┘
-         CloudWatch Alarms trigger scaling
+```mermaid
+flowchart TD
+    Internet([Internet])
+    R53["Route 53\n(DNS)"]
+    CF["CloudFront\n(CDN — tùy chọn)"]
+    CW["CloudWatch Alarms\n(trigger scaling)"]
+
+    subgraph VPC[VPC]
+        subgraph PubSubnets[Public Subnets — cross-AZ]
+            ALB["Application Load Balancer\nListener: HTTPS:443 → Target Group"]
+        end
+        subgraph ASGGroup[Auto Scaling Group — spans AZs]
+            AZ1["AZ 1a\nEC2 · EC2 · EC2"]
+            AZ2["AZ 1b\nEC2 · EC2 · EC2"]
+        end
+    end
+
+    Internet --> R53 --> CF --> ALB
+    ALB -->|Forward to healthy targets| AZ1
+    ALB -->|Forward to healthy targets| AZ2
+    CW -.->|trigger| ASGGroup
 ```
 
 ---
@@ -66,7 +58,7 @@ ASG Configuration:
 
 | | Launch Template | Launch Configuration |
 |---|---|---|
-| **Status** | ✅ Được khuyến nghị | ⚠️ Legacy, không nên dùng |
+| **Status** | Được khuyến nghị | Legacy, không nên dùng |
 | **Versioning** | Có (v1, v2, v3...) | Không |
 | **Spot + On-Demand mix** | Có | Không |
 | **Multiple instance types** | Có | Không |
@@ -123,36 +115,37 @@ ASG sẽ dần thay thế các instance cũ bằng instance mới từ Launch Te
 
 ### 2.5 Lifecycle Hooks
 
-```
-Launch Lifecycle:
-  Pending → [Pending:Wait] → [Pending:Proceed] → InService
-                │
-                └── Hook: Chạy script install software, 
-                          warm up cache, run health check
-                          Timeout: 1 giờ mặc định
+**Launch lifecycle:**
 
-Terminate Lifecycle:
-  Terminating → [Terminating:Wait] → [Terminating:Proceed] → Terminated
-                     │
-                     └── Hook: Drain connections, 
-                               upload logs to S3,
-                               deregister from service discovery
+```mermaid
+flowchart LR
+    P([Pending]) --> PW(["Pending:Wait"])
+    PW -->|"install software\nwarm up cache\nrun health check\nTimeout: 1 giờ"| PP(["Pending:Proceed"])
+    PP --> IS([InService])
+```
+
+**Terminate lifecycle:**
+
+```mermaid
+flowchart LR
+    T([Terminating]) --> TW(["Terminating:Wait"])
+    TW -->|"drain connections\nupload logs to S3\nderegister from discovery"| TP(["Terminating:Proceed"])
+    TP --> TD([Terminated])
 ```
 
 ### 2.6 Warm Pools
 
-```
-Cold Start Problem: EC2 mới boot → install → warm up → mất 5-10 phút
+> **Cold Start Problem:** EC2 mới boot → install → warm up → mất 5–10 phút.
 
-Giải pháp Warm Pool:
-  ┌────────────────┐    Scale out event    ┌──────────────┐
-  │   Warm Pool    │ ─────────────────────► │     ASG      │
-  │  (Stopped EC2  │   (pre-initialized,   │  (InService) │
-  │   đã warm up)  │   ready in seconds)   │              │
-  └────────────────┘                        └──────────────┘
-  
-Chi phí Warm Pool: Chỉ tính EBS (EC2 ở trạng thái Stopped)
+```mermaid
+flowchart LR
+    WP["Warm Pool\nStopped EC2 — pre-initialized\nđã warm up sẵn"]
+    ASG["Auto Scaling Group\nInService"]
+
+    WP -->|"Scale-out event\nready in seconds"| ASG
 ```
+
+> **Chi phí Warm Pool:** Chỉ tính EBS (EC2 ở trạng thái Stopped, không tính compute).
 
 ---
 
@@ -160,28 +153,27 @@ Chi phí Warm Pool: Chỉ tính EBS (EC2 ở trạng thái Stopped)
 
 ### 3.1 Kiến trúc ALB
 
-```
-Internet (HTTPS :443)
-       │
-       ▼
-┌──────────────────────────────────────────────────────┐
-│                   ALB                                 │
-│  ┌────────────────────────────────────────────────┐   │
-│  │  Listener: HTTPS:443                           │   │
-│  │  SSL Certificate (ACM)                         │   │
-│  │                                                │   │
-│  │  Rules (evaluated top to bottom):              │   │
-│  │  ├── /api/*     → Target Group: API servers    │   │
-│  │  ├── /static/*  → Target Group: S3 (redirect)  │   │
-│  │  ├── /admin/*   + Header[X-Admin]=true         │   │
-│  │  │              → Target Group: Admin EC2       │   │
-│  │  └── Default   → Target Group: Web EC2         │   │
-│  └────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────┘
-       │              │              │
-       ▼              ▼              ▼
-  Target Group   Target Group   Target Group
-  (EC2 instances) (Lambda fn.)  (IP addresses)
+```mermaid
+flowchart TD
+    Internet(["Internet — HTTPS :443"])
+
+    subgraph ALB[Application Load Balancer]
+        L["Listener: HTTPS:443\nSSL Certificate — ACM"]
+        R1["Rule 1: /api/*\n→ TG: API Servers"]
+        R2["Rule 2: /static/*\n→ TG: S3 redirect"]
+        R3["Rule 3: /admin/* + Header X-Admin = true\n→ TG: Admin EC2"]
+        RD["Default\n→ TG: Web EC2"]
+    end
+
+    TG1["Target Group\nEC2 instances"]
+    TG2["Target Group\nLambda functions"]
+    TG3["Target Group\nIP addresses"]
+
+    Internet --> L
+    L --> R1 --> TG1
+    L --> R2 --> TG2
+    L --> R3 --> TG1
+    L --> RD --> TG3
 ```
 
 ### 3.2 Listener Rules
@@ -286,34 +278,34 @@ Key CloudWatch Metrics:
 
 ### 4.2 NLB Architecture
 
-```
-Client (thấy IP thật của Client)
-   │
-   ▼
-┌──────────────────────────────┐
-│           NLB                │
-│  ┌──────────────────────┐    │
-│  │  Listener: TCP:443   │    │
-│  │  TLS passthrough     │    │  Static Elastic IP per AZ
-│  └──────────────────────┘    │  → Firewall whitelist ổn định
-└──────────────────────────────┘
-        │           │
-        ▼           ▼
-   EC2 (AZ-a)   EC2 (AZ-b)
-   Thấy source IP thật của Client
-   (không qua header như ALB)
+```mermaid
+flowchart TD
+    Client(["Client\nsource IP được giữ nguyên"])
+
+    subgraph NLB["Network Load Balancer\n1 Elastic IP / AZ — stable cho firewall whitelist"]
+        L["Listener: TCP:443\nTLS passthrough"]
+    end
+
+    EC2A["EC2 — AZ-a\nthấy source IP thật của client"]
+    EC2B["EC2 — AZ-b\nthấy source IP thật của client"]
+
+    Client --> L
+    L --> EC2A
+    L --> EC2B
 ```
 
 ### 4.3 Gateway Load Balancer (GWLB) — Bonus
 
-```
-Use Case: Chạy network appliances (firewall, IDS/IPS) inline với traffic
+**Use case:** Chạy network appliances (firewall, IDS/IPS) inline với traffic.
 
-Traffic → GWLB → Appliance EC2 (inspect) → GWLB → Destination
-               ↕ GENEVE protocol (port 6081)
-
-Dùng khi: Triển khai Palo Alto, Fortinet, CheckPoint inline.
+```mermaid
+flowchart LR
+    T([Traffic]) --> GWLB["Gateway Load Balancer\nGENEVE — port 6081"]
+    GWLB <-->|"inspect / filter"| App["Appliance EC2\nPalo Alto / Fortinet / CheckPoint"]
+    GWLB --> D([Destination])
 ```
+
+**Dùng khi:** Triển khai Palo Alto, Fortinet, CheckPoint inline.
 
 ---
 
@@ -321,29 +313,32 @@ Dùng khi: Triển khai Palo Alto, Fortinet, CheckPoint inline.
 
 ### 5.1 Scale-out Flow
 
-```
-1. CloudWatch: CPUUtilization > 70% trong 2 phút
-2. Alarm → Trigger Step Scaling Policy → "Add 2 instances"
-3. ASG: Launch 2 EC2 từ Launch Template
-4. Lifecycle Hook: [Pending:Wait]
-   → Script: install dependencies, warm cache
-   → Complete lifecycle action
-5. EC2 → InService
-6. ASG: Register EC2 vào ALB Target Group
-7. ALB: Health check → EC2 HEALTHY
-8. ALB: Bắt đầu route traffic đến EC2 mới
+```mermaid
+flowchart TD
+    A["1. CloudWatch\nCPUUtilization > 70% trong 2 phút"]
+    B["2. Alarm → Step Scaling Policy\nAdd 2 instances"]
+    C["3. ASG: Launch 2 EC2\ntừ Launch Template"]
+    D["4. Lifecycle Hook: Pending:Wait\ninstall dependencies, warm cache\n→ Complete lifecycle action"]
+    E["5. EC2 → InService"]
+    F["6. ASG: Register EC2\nvào ALB Target Group"]
+    G["7. ALB: Health check\n→ EC2 HEALTHY"]
+    H["8. ALB: Route traffic\nđến EC2 mới"]
+
+    A --> B --> C --> D --> E --> F --> G --> H
 ```
 
 ### 5.2 Scale-in Flow (Graceful)
 
-```
-1. CloudWatch: CPUUtilization < 30% trong 10 phút
-2. Alarm → "Remove 1 instance"
-3. ASG chọn instance cần terminate (Termination Policy)
-4. ALB: Begin deregistering instance (Connection Draining 300s)
-5. Lifecycle Hook: [Terminating:Wait]
-   → Script: Drain remaining connections, upload logs
-6. Instance → Terminated
+```mermaid
+flowchart TD
+    A["1. CloudWatch\nCPUUtilization < 30% trong 10 phút"]
+    B["2. Alarm → Remove 1 instance"]
+    C["3. ASG chọn instance\ntheo Termination Policy"]
+    D["4. ALB: Deregistering instance\nConnection Draining 300s"]
+    E["5. Lifecycle Hook: Terminating:Wait\ndrain connections, upload logs"]
+    F["6. Instance → Terminated"]
+
+    A --> B --> C --> D --> E --> F
 ```
 
 ### 5.3 Termination Policies
