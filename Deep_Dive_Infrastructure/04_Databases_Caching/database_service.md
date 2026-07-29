@@ -151,7 +151,7 @@ Hệ thống Kho dữ liệu (Data Warehouse) quy mô Petabyte trên Cloud.
 ## 5. Các nhóm chuyên biệt khác (Specialized Databases)
 
 ### Amazon ElastiCache (In-memory)
-Dịch vụ lưu trữ dữ liệu trực tiếp trên bộ nhớ RAM, mang lại tốc độ truy cập ở mức **micro giây** (Xem thêm chi tiết tại tài liệu chuyên sâu [ElastiCache.md](file:///D:/Cloud_AWS/Cloud-Learning-Journey/Deep_Dive_Infrastructure/04_Databases_Caching/ElastiCache.md)).
+Dịch vụ lưu trữ dữ liệu trực tiếp trên bộ nhớ RAM, mang lại tốc độ truy cập ở mức **micro giây** (Xem thêm chi tiết tại tài liệu chuyên sâu [ElastiCache.md](ElastiCache.md)).
 *   **Redis Engine:** Hỗ trợ cấu trúc dữ liệu phức tạp (Lists, Sets, Sorted Sets), tính năng bền vững dữ liệu (persistence), pub/sub và tính sẵn sàng cao.
 *   **Memcached Engine:** Đơn giản hơn, chuyên dùng làm cache phẳng cho key-value nhỏ, không yêu cầu độ bền vững cao.
 *   **Trường hợp sử dụng:** Làm bộ nhớ đệm (caching) giảm tải cho DB quan hệ, lưu trữ session (Session Store), hoặc bảng xếp hạng game (Leaderboards) thời gian thực.
@@ -213,3 +213,13 @@ Khi cần dịch chuyển cơ sở dữ liệu từ On-premises hoặc các clou
 | **Mô hình chi phí** | Trả tiền theo giờ hoạt động của instance (dù có dùng hay không) | Chỉ trả tiền cho dung lượng lưu trữ và số request thực tế |
 | **Khả năng co giãn** | Phải cấu hình auto-scaling hoặc nâng cấp instance thủ công | Tự động tăng/giảm quy mô theo tải thực tế (thậm chí về 0) |
 | **Dịch vụ đại diện** | Amazon RDS, Redshift Provisioned, ElastiCache | DynamoDB, Aurora Serverless v2, Timestream |
+
+---
+
+## 9. Các liên kết liên quan trong hệ thống
+
+Để củng cố kiến thức về hạ tầng cơ sở dữ liệu và lưu trữ trên AWS, hãy tham khảo thêm các tài liệu sau:
+*   [ElastiCache.md](ElastiCache.md): Tìm hiểu giải pháp Caching dữ liệu in-memory để giảm tải cho database chính.
+*   [S3_Storage_Classes.md](../03_Storage_ContentDelivery_SES/S3_Storage_Classes.md): Tìm hiểu các phân hạng lưu trữ S3 để lưu trữ dữ liệu phi cấu trúc tối ưu chi phí.
+*   [ECS_ECR.md](../05_Containers_Serverless/ECS_ECR.md): Tìm hiểu cách kết nối ứng dụng chạy trong container với database.
+

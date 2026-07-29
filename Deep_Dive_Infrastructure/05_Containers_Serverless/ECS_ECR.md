@@ -40,47 +40,9 @@ Amazon ECR là một Registry quản lý Docker container được bảo mật c
 
 Mối quan hệ giữa các thành phần trong ECS được mô tả qua sơ đồ sau:
 
-```mermaid
-graph TD
-    subgraph Registry [Amazon ECR]
-        Image[Docker Container Image]
-    end
+![Bản đồ khái niệm cốt lõi của Amazon ECS](assets/ecs_concept_map.png)
+<p align="center"><i> Sơ đồ mối quan hệ giữa các cấu phần cốt lõi trong Amazon ECS </i></p>
 
-    subgraph ECS [Amazon ECS Core Components]
-        TD["Task Definition (Blueprint - JSON)<br/>- Image: ECR Image<br/>- CPU/Memory<br/>- Ports<br/>- Execution/Task Roles"]
-        Service["ECS Service<br/>- Duy trì số lượng Task yêu cầu<br/>- Tích hợp với Application Load Balancer<br/>- Auto Scaling Tasks"]
-        Task1["Task 1 (Container Instance)"]
-        Task2["Task 2 (Container Instance)"]
-        
-        TD -->|Tạo bản sao thực thi| Task1
-        TD -->|Tạo bản sao thực thi| Task2
-        Service -->|Quản lý vòng đời| Task1
-        Service -->|Quản lý vòng đời| Task2
-    end
-
-    subgraph Infrastructure [Hạ tầng Compute]
-        Cluster["ECS Cluster (Logical Grouping)"]
-        
-        subgraph FargateType [Serverless Layer]
-            Fargate["AWS Fargate<br/>- Quản lý tự động 100%<br/>- Thanh toán theo CPU/RAM cấp phát<br/>- Cô lập mạng cấp cao (awsvpc)"]
-        end
-        
-        subgraph EC2Type [Provisioned Layer]
-            ASG["Auto Scaling Group (ASG)<br/>- Khởi tạo EC2 Instances<br/>- Scale dựa trên Capacity Provider"]
-            Agent["ECS Container Agent<br/>(Chạy trên EC2 instances)"]
-            EC2_1["EC2 Instance 1"]
-            EC2_2["EC2 Instance 2"]
-            
-            ASG -->|Quản lý| EC2_1
-            ASG -->|Quản lý| EC2_2
-            Agent -->|Đăng ký node vào| Cluster
-        end
-    end
-    
-    Image -->|Nạp vào| TD
-    Task1 & Task2 -->|Chạy trên| Cluster
-    Cluster -->|Lựa chọn Capacity| FargateType & EC2Type
-```
 
 ### Phân tích chi tiết các Keywords:
 

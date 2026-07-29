@@ -50,7 +50,7 @@ sequenceDiagram
     participant Edge as Edge Location (Cache)
     participant Origin as Origin (S3/ALB)
 
-    Viewer->>DNS: Yêu cầu phân giải tên miền (ví dụ: cdn.domain.com) - thông qua [Route 53](file:///D:/Cloud_AWS/Cloud-Learning-Journey/Deep_Dive_Infrastructure/06_MultiAccount_Governance_Global_DNS/Route53_DeepDive.md)
+    Viewer->>DNS: Yêu cầu phân giải tên miền (ví dụ: cdn.domain.com) - thông qua [Route 53](../06_MultiAccount_Governance_Global_DNS/Route53_DeepDive.md)
     DNS-->>Viewer: Trả về IP của Edge Location tối ưu nhất (gần nhất/độ trễ thấp nhất)
     Viewer->>Edge: Gửi HTTP Request lấy logo.png
     alt Cache Hit (Có sẵn trong Cache)
@@ -88,7 +88,7 @@ CloudFront tích hợp sẵn nhiều lớp bảo mật để bảo vệ nội du
 1.  **Chống DDoS toàn diện:** Tích hợp mặc định với **AWS Shield Standard** để chống các cuộc tấn công DDoS ở tầng Lớp mạng (Layer 3/4).
 2.  **Tường lửa ứng dụng web:** Tích hợp với **AWS WAF (Web Application Firewall)** để chặn các cuộc tấn công tầng ứng dụng (SQL Injection, Cross-Site Scripting - XSS) ngay tại Edge.
 3.  **Bảo vệ S3 Origin với OAC (Origin Access Control):**
-    *   Giúp đóng hoàn toàn quyền truy cập công khai (Public Access) của S3 Bucket. S3 chỉ chấp nhận các yêu cầu được ký số (signed requests) từ chính CloudFront Distribution được chỉ định thông qua Bucket Policy (Xem thêm chi tiết về các loại lưu trữ S3 tại [S3_Storage_Classes.md](file:///D:/Cloud_AWS/Cloud-Learning-Journey/Deep_Dive_Infrastructure/03_Storage_ContentDelivery_SES/S3_Storage_Classes.md)).
+    *   Giúp đóng hoàn toàn quyền truy cập công khai (Public Access) của S3 Bucket. S3 chỉ chấp nhận các yêu cầu được ký số (signed requests) từ chính CloudFront Distribution được chỉ định thông qua Bucket Policy (Xem thêm chi tiết về các loại lưu trữ S3 tại [S3_Storage_Classes.md](S3_Storage_Classes.md)).
     *   OAC là phiên bản nâng cấp hoàn toàn cho **OAI (Origin Access Identity)** cũ, hỗ trợ các vùng AWS mới (Opt-in regions), hỗ trợ SSE-KMS với khóa tự quản lý, và hỗ trợ các dịch vụ khác như Lambda Function URLs.
 4.  **Field-Level Encryption (Mã hóa mức độ trường):** Cho phép mã hóa các trường dữ liệu nhạy cảm (như số thẻ tín dụng) bằng khóa công khai (public key) ngay tại Edge Location trước khi request đến ứng dụng. Chỉ có service backend sở hữu khóa riêng tư (private key) mới giải mã được.
 5.  **Geo Restriction (Chặn theo địa lý):** Cho phép thiết lập Whitelist hoặc Blacklist để giới hạn quyền truy cập nội dung từ các quốc gia cụ thể dựa trên địa chỉ IP.
@@ -111,7 +111,7 @@ AWS cung cấp hai giải pháp để thực thi mã nguồn ngay tại Edge c�
 | **Dung lượng code tối đa** | 10 KB | 1 MB (Viewer) / 50 MB (Origin) |
 | **Các điểm kích hoạt (Triggers)** | - Viewer Request<br/>- Viewer Response | - Viewer Request / Viewer Response<br/>- Origin Request / Origin Response |
 | **Chi phí** | Rất rẻ ($0.1 mỗi 1 triệu requests) | Đắt hơn ($0.6 mỗi 1 triệu requests + thời gian chạy) |
-| **Trường hợp sử dụng phù hợp** | - URL rewrite/redirect đơn giản<br/>- Thêm/bớt/sửa Header HTTP<br/>- Chuẩn hóa Cache Key (Query string, cookie)<br/>- Kiểm tra Authorization token đơn giản | - Tương tác với DB (DynamoDB, RDS - xem thêm [database_service.md](file:///D:/Cloud_AWS/Cloud-Learning-Journey/Deep_Dive_Infrastructure/04_Databases_Caching/database_service.md)) hoặc các AWS Services khác<br/>- Xử lý/chỉnh sửa Body của request/response<br/>- Resize hình ảnh tự động (Image optimization)<br/>- A/B Testing phức tạp |
+| **Trường hợp sử dụng phù hợp** | - URL rewrite/redirect đơn giản<br/>- Thêm/bớt/sửa Header HTTP<br/>- Chuẩn hóa Cache Key (Query string, cookie)<br/>- Kiểm tra Authorization token đơn giản | - Tương tác với DB (DynamoDB, RDS - xem thêm [database_service.md](../04_Databases_Caching/database_service.md)) hoặc các AWS Services khác<br/>- Xử lý/chỉnh sửa Body của request/response<br/>- Resize hình ảnh tự động (Image optimization)<br/>- A/B Testing phức tạp |
 
 ---
 
@@ -146,4 +146,12 @@ Khi cập nhật file mới lên Origin (ví dụ: upload file `style.css` mới
 ### C. Sử dụng nén dữ liệu (Compression)
 Bật tính năng tự động nén bằng **Gzip** hoặc **Brotli** trong CloudFront Behavior để giảm kích thước tệp tải xuống, cải thiện tốc độ tải trang cho người dùng và giảm chi phí truyền dữ liệu (Data Transfer Out).
 
+---
 
+## 9. Các liên kết liên quan trong hệ thống
+
+Để củng cố kiến thức về mạng phân phối nội dung và các hạ tầng liên quan trên AWS, hãy tham khảo thêm các tài liệu sau:
+*   [S3_Storage_Classes.md](S3_Storage_Classes.md): Tìm hiểu các phân hạng lưu trữ S3 dùng làm Origin cho CloudFront.
+*   [database_service.md](../04_Databases_Caching/database_service.md): Tìm hiểu về cơ sở dữ liệu quan hệ (RDS/Aurora) làm nguồn dữ liệu động.
+*   [ElastiCache.md](../04_Databases_Caching/ElastiCache.md): So sánh giải pháp Caching ở Edge (CloudFront) và Caching ở Database (ElastiCache).
+*   [ECS_ECR.md](../05_Containers_Serverless/ECS_ECR.md): Tìm hiểu cách deploy ứng dụng web container chạy đằng sau CloudFront.
