@@ -1,0 +1,113 @@
+<mxfile host="65bd71144e">
+  <diagram name="Kubernetes Architecture Flow" id="k8s_flow_01">
+    <mxGraphModel dx="1500" dy="1200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="Client" value="Client / kubectl" style="shape=mxgraph.kubernetes.icon;fillColor=#326CE5;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=14;fontColor=#111111;pointerEvents=1;prIcon=kubectl;" vertex="1" parent="1">
+          <mxGeometry x="665" y="30" width="70" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="ControlPlane" value="Control Plane" style="swimlane;whiteSpace=wrap;html=1;fillColor=#f9f2f4;strokeColor=#333333;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=10;startSize=30;fontColor=#333333;fontStyle=1;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="80" y="160" width="1240" height="800" as="geometry"/>
+        </mxCell>
+        <mxCell id="APIServer" value="kube-apiserver&#10;(Central Coordinator)" style="shape=mxgraph.kubernetes.icon;fillColor=#326CE5;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=14;fontColor=#111111;pointerEvents=1;prIcon=api;" vertex="1" parent="ControlPlane">
+          <mxGeometry x="585" y="50" width="70" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="Pipeline" value="API Server Request Processing Pipeline" style="swimlane;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;strokeWidth=1.5;dashed=1;align=left;verticalAlign=top;spacingLeft=10;startSize=30;fontColor=#666666;fontStyle=1;fontSize=13;" vertex="1" parent="ControlPlane">
+          <mxGeometry x="440" y="180" width="360" height="420" as="geometry"/>
+        </mxCell>
+        <mxCell id="AuthN" value="1. Authentication" style="shape=mxgraph.kubernetes.icon;fillColor=#DD344C;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=13;fontColor=#111111;pointerEvents=1;prIcon=user;" vertex="1" parent="Pipeline">
+          <mxGeometry x="150" y="50" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="AuthZ" value="2. Authorization / RBAC" style="shape=mxgraph.kubernetes.icon;fillColor=#DD344C;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=13;fontColor=#111111;pointerEvents=1;prIcon=rb;" vertex="1" parent="Pipeline">
+          <mxGeometry x="150" y="140" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="Mutating" value="3. Mutating Admission" style="shape=mxgraph.kubernetes.icon;fillColor=#8C4FFF;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=13;fontColor=#111111;pointerEvents=1;prIcon=deploy;" vertex="1" parent="Pipeline">
+          <mxGeometry x="150" y="230" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="Validating" value="4. Validating Admission" style="shape=mxgraph.kubernetes.icon;fillColor=#8C4FFF;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=13;fontColor=#111111;pointerEvents=1;prIcon=deploy;" vertex="1" parent="Pipeline">
+          <mxGeometry x="150" y="320" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="BuiltInM" value="Built-in Plugins&#10;(ServiceAccount, etc.)" style="shape=mxgraph.kubernetes.icon;fillColor=#7AA116;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=13;fontColor=#111111;pointerEvents=1;prIcon=cm;" vertex="1" parent="ControlPlane">
+          <mxGeometry x="200" y="410" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="WebhookM" value="Mutating Webhook&#10;(Istio, cert-manager)" style="shape=mxgraph.kubernetes.icon;fillColor=#8C4FFF;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=13;fontColor=#111111;pointerEvents=1;prIcon=ing;" vertex="1" parent="ControlPlane">
+          <mxGeometry x="950" y="410" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="BuiltInV" value="Built-in Plugins&#10;(PodSecurity, Quota)" style="shape=mxgraph.kubernetes.icon;fillColor=#7AA116;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=13;fontColor=#111111;pointerEvents=1;prIcon=cm;" vertex="1" parent="ControlPlane">
+          <mxGeometry x="200" y="500" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="CEL" value="Admission Policy&#10;(Written in CEL)" style="shape=mxgraph.kubernetes.icon;fillColor=#ED7100;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=13;fontColor=#111111;pointerEvents=1;prIcon=sts;" vertex="1" parent="ControlPlane">
+          <mxGeometry x="200" y="590" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="WebhookV" value="Validating Webhook&#10;(Kyverno, OPA)" style="shape=mxgraph.kubernetes.icon;fillColor=#8C4FFF;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=13;fontColor=#111111;pointerEvents=1;prIcon=ing;" vertex="1" parent="ControlPlane">
+          <mxGeometry x="950" y="500" width="60" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="etcd" value="etcd&#10;(Core Database)" style="shape=mxgraph.kubernetes.icon;fillColor=#326CE5;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=14;fontColor=#111111;pointerEvents=1;prIcon=etcd;" vertex="1" parent="ControlPlane">
+          <mxGeometry x="585" y="660" width="70" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="WorkerNode" value="Worker Node" style="swimlane;whiteSpace=wrap;html=1;fillColor=#eef9f2;strokeColor=#333333;strokeWidth=2;align=left;verticalAlign=top;spacingLeft=10;startSize=30;fontColor=#333333;fontStyle=1;fontSize=15;" vertex="1" parent="1">
+          <mxGeometry x="80" y="990" width="1240" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="Kubelet" value="kubelet&#10;(Node Agent)" style="shape=mxgraph.kubernetes.icon;fillColor=#326CE5;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=14;fontColor=#111111;pointerEvents=1;prIcon=kubelet;" vertex="1" parent="WorkerNode">
+          <mxGeometry x="315" y="50" width="70" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="Pod" value="Pod / Container&#10;(Scheduled &amp; Configured)" style="shape=mxgraph.kubernetes.icon;fillColor=#326CE5;strokeColor=none;verticalLabelPosition=bottom;align=center;verticalAlign=top;fontStyle=1;fontSize=14;fontColor=#111111;pointerEvents=1;prIcon=pod;" vertex="1" parent="WorkerNode">
+          <mxGeometry x="825" y="50" width="70" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="100" value="1. Send API Request&#10;(e.g., Create Pod)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;strokeWidth=3;endArrow=block;endFill=1;fontSize=13;fontStyle=1;fontColor=#111111;" edge="1" parent="1" source="Client" target="APIServer">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="101" value="Ingest Request" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=1.5;dashed=1;endArrow=block;endFill=1;fontSize=13;fontColor=#444444;" edge="1" parent="ControlPlane" source="APIServer" target="AuthN">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="102" value="Success" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=13;fontColor=#444444;" edge="1" parent="Pipeline" source="AuthN" target="AuthZ">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="103" value="Allowed" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=13;fontColor=#444444;" edge="1" parent="Pipeline" source="AuthZ" target="Mutating">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="104" value="Mutated" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;strokeWidth=1.5;endArrow=block;endFill=1;fontSize=13;fontColor=#444444;" edge="1" parent="Pipeline" source="Mutating" target="Validating">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="105" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;strokeWidth=1.5;endArrow=block;endFill=1;startArrow=block;startFill=1;fontSize=13;" edge="1" parent="ControlPlane" source="Mutating" target="WebhookM">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="106" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=1.5;endArrow=none;fontSize=13;" edge="1" parent="ControlPlane" source="Mutating" target="BuiltInM">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="107" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=1.5;endArrow=none;fontSize=13;" edge="1" parent="ControlPlane" source="Validating" target="BuiltInV">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="108" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=1.5;endArrow=none;fontSize=13;" edge="1" parent="ControlPlane" source="Validating" target="CEL">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="109" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;strokeWidth=1.5;endArrow=block;endFill=1;startArrow=block;startFill=1;fontSize=13;" edge="1" parent="ControlPlane" source="Validating" target="WebhookV">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="110" value="5. Request Validated" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;strokeWidth=3;endArrow=block;endFill=1;fontSize=13;fontStyle=1;fontColor=#111111;" edge="1" parent="ControlPlane" source="Validating" target="etcd">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="111" value="State Saved" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#666666;strokeWidth=1.5;dashed=1;endArrow=block;endFill=1;fontSize=13;fontColor=#444444;" edge="1" parent="ControlPlane" source="etcd" target="APIServer">
+          <mxGeometry relative="1" as="geometry">
+            <mxArray as="points">
+              <mxPoint x="380" y="695"/>
+              <mxPoint x="380" y="85"/>
+            </mxArray>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="112" value="6. Watch &amp; Assign" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;strokeWidth=3;endArrow=block;endFill=1;fontSize=13;fontStyle=1;fontColor=#111111;" edge="1" parent="1" source="APIServer" target="Kubelet">
+          <mxGeometry relative="1" as="geometry">
+            <mxArray as="points">
+              <mxPoint x="150" y="250"/>
+              <mxPoint x="150" y="1020"/>
+            </mxArray>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="113" value="7. Execute / Create Pod" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#333333;strokeWidth=3;endArrow=block;endFill=1;fontSize=13;fontStyle=1;fontColor=#111111;" edge="1" parent="WorkerNode" source="Kubelet" target="Pod">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

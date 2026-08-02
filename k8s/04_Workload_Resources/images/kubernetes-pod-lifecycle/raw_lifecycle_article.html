@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en" data-color-scheme="system">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Kubernetes Pod Lifecycle Explained With Examples</title>
+
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="theme-color" content="#FF1A75">
+
+
+    <link rel="preload" href="https://devopscube.com/assets/dist/app.min.js?v=6Pyk5V6hrdiram5G" as="script">
+    <link rel="preload" href="https://devopscube.com/assets/dist/app.min.css?v=ZqrEeycizXhlXbLi" as="style">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+
+  <style> 
+    body { 
+      --font-headings: var(--gh-font-heading, var(--font-system));
+      --font-body: var(--gh-font-heading, var(--font-system));
+    }
+  </style>
+
+    <link rel="preload stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" 
+          as="style" onload="this.onload=null;this.rel='stylesheet'" crossorigin>
+    <style>body { --font-body: var(--gh-font-body, 'Figtree'), sans-serif; --font-headings: var(--gh-font-heading, 'Figtree'), sans-serif; }</style>
+
+
+
+
+
+
+
+    <script async defer src="https://devopscube.com/assets/dist/app.min.js?v=6Pyk5V6hrdiram5G"></script>
+
+    <link rel="stylesheet" type="text/css" href="https://devopscube.com/assets/dist/app.min.css?v=ZqrEeycizXhlXbLi">
+
+    <style>
+  :root {
+    --global-max-width: 1320px; /* site max width */
+    --global-content-width: 680px; /* post-content-width */
+    --global-wide-width: 960px; /* site max width */
+    --global-post-hero-content-max-width: 768px;
+    --global-radius: 5px; /* default radius */
+    --global-gallery-gap: 1em; /* Image gallery distance between images */
+    --global-hyphens: none; /* none/auto */
+    --global-header-height: 72px;
+    --global-theme-notifications: visible; /* visible/hidden */
+    --global-progress-bar: visible; /* visible/hidden */
+    --global-content-preview-fading: 0%; /* 50%-100% for fading effect */
+    --global-hero-img-filter: ;
+    --global-scroll-behavior: auto;
+  }
+</style>
+
+<script>
+  let preferredTheme = localStorage.getItem('PREFERRED_COLOR_SCHEME') || `system`;
+  document.documentElement.setAttribute('data-color-scheme', preferredTheme);
+  
+  // Global values needed
+  const themeGlobal = {
+    currentPage: parseInt(''),
+    nextPage: parseInt(''),
+    nextPageLink: '',
+    maxPages: parseInt(''), 
+    lastPage: `` === `` ? true : false,
+    postsPerPage: parseInt('24'),
+    totalPosts: parseInt(''), 
+    scrollPos: 0,
+    imageLightbox: `true` === `true` ? true : false,
+    autoloadResources: false,
+    filterScrollBehavior: 'smooth'
+  }
+
+  // Calculate contrast & HSL value;
+  function getBrandColorInfo(hexcolor) {
+    // get contrast
+    if (hexcolor.slice(0, 1) === '#') { hexcolor = hexcolor.slice(1); }
+    if (hexcolor.length === 3) { hexcolor = hexcolor.split('').map(function (hex) { return hex + hex;}).join(''); }
+    let r = parseInt(hexcolor.substr(0,2),16), g = parseInt(hexcolor.substr(2,2),16), b = parseInt(hexcolor.substr(4,2),16);
+    let yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    const colorContrast = (yiq >= 128) ? '#000' : '#fff';
+
+    //get HSL
+    r /= 255, g /= 255, b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min)  /  2;  
+    if ( max == min ) { h = s = 0; } else {
+      let d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch(max){
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+      h /= 6;
+    }
+    const colorHSL = [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+
+    // return
+    return { colorContrast, colorHSL }
+  };
+
+  const brandColor = getBrandColorInfo("#FF1A75");
+  let style = document.createElement('style');
+  style.innerHTML = `:root { 
+    --color-brand-contrast: ${brandColor.colorContrast}; 
+    --color-brand-h: ${brandColor.colorHSL[0]};
+    --color-brand-s: ${brandColor.colorHSL[1]}%;
+    --color-brand-l: ${brandColor.colorHSL[2]}%;
+    --color-brand-hsl: ${brandColor.colorHSL[0]} ${brandColor.colorHSL[1]}% ${brandColor.colorHSL[2]}%;
+  }`
+  document.getElementsByTagName('head')[0].appendChild(style);
+</script>
+
+    
+    
+     
+
+    <link rel="icon" href="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w256h256/format/jpeg/2025/03/388ddd1137095096fbd7a5d875f449e9-1.jpg" type="image/jpeg">
+    <link rel="canonical" href="https://devopscube.com/kubernetes-pod-lifecycle/">
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    
+    <meta property="og:site_name" content="DevOpsCube – Easy DevOps, SRE Guides &amp; Reviews">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Kubernetes Pod Lifecycle Explained With Examples">
+    <meta property="og:description" content="In this blog, we will look at the lifecycle of a Kubernetes pod with examples and illustrations.
+
+If you are new to the concepts of pods, please read the Kubernetes pod blog to understand all the basics and do hands-on on creating and managing pods.
+
+To understand the lifecycle">
+    <meta property="og:url" content="https://devopscube.com/kubernetes-pod-lifecycle/">
+    <meta property="og:image" content="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w1200/2025/03/pod-lifecycle-1.png">
+    <meta property="article:published_time" content="2023-09-14T03:17:00.000Z">
+    <meta property="article:modified_time" content="2025-03-12T16:32:12.000Z">
+    <meta property="article:tag" content="Kubernetes">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Kubernetes Pod Lifecycle Explained With Examples">
+    <meta name="twitter:description" content="In this blog, we will look at the lifecycle of a Kubernetes pod with examples and illustrations.
+
+If you are new to the concepts of pods, please read the Kubernetes pod blog to understand all the basics and do hands-on on creating and managing pods.
+
+To understand the lifecycle">
+    <meta name="twitter:url" content="https://devopscube.com/kubernetes-pod-lifecycle/">
+    <meta name="twitter:image" content="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w1200/2025/03/pod-lifecycle-1.png">
+    <meta name="twitter:label1" content="Written by">
+    <meta name="twitter:data1" content="Bibin Wilson">
+    <meta name="twitter:label2" content="Filed under">
+    <meta name="twitter:data2" content="Kubernetes">
+    <meta name="twitter:site" content="@devopscube">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="675">
+    
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "publisher": {
+        "@type": "Organization",
+        "name": "DevOpsCube – Easy DevOps, SRE Guides & Reviews",
+        "url": "https://devopscube.com/",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/2025/03/Comtechies-Logo--10-.png"
+        }
+    },
+    "author": {
+        "@type": "Person",
+        "name": "Bibin Wilson",
+        "image": {
+            "@type": "ImageObject",
+            "url": "https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s=250&r=x&d=mp",
+            "width": 250,
+            "height": 250
+        },
+        "url": "https://devopscube.com/author/bibin/",
+        "sameAs": []
+    },
+    "headline": "Kubernetes Pod Lifecycle Explained With Examples",
+    "url": "https://devopscube.com/kubernetes-pod-lifecycle/",
+    "datePublished": "2023-09-14T03:17:00.000Z",
+    "dateModified": "2025-03-12T16:32:12.000Z",
+    "image": {
+        "@type": "ImageObject",
+        "url": "https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w1200/2025/03/pod-lifecycle-1.png",
+        "width": 1200,
+        "height": 675
+    },
+    "keywords": "Kubernetes",
+    "description": "In this blog, we will look at the lifecycle of a Kubernetes pod with examples and illustrations.\n\nIf you are new to the concepts of pods, please read the Kubernetes pod blog to understand all the basics and do hands-on on creating and managing pods.\n\nTo understand the lifecycle of a pod, we will look a the following\n\n 1. Pod Phases\n 2. Pod Conditions\n 3. Container Status\n\nTo understand the concepts better, let's assume a multi-container pod with the following\n\n 1. An init container to fetch an A",
+    "mainEntityOfPage": "https://devopscube.com/kubernetes-pod-lifecycle/"
+}
+    </script>
+
+    <meta name="generator" content="Ghost 6.55">
+    <link rel="alternate" type="application/rss+xml" title="DevOpsCube – Easy DevOps, SRE Guides &amp; Reviews" href="https://devopscube.com/rss/">
+    
+    <script defer src="https://cdn.jsdelivr.net/ghost/sodo-search@~1.8/umd/sodo-search.min.js" data-key="0c08722cec835980d934fd5688" data-styles="https://cdn.jsdelivr.net/ghost/sodo-search@~1.8/umd/main.css" data-sodo-search="https://devopscube.ghost.io/" data-locale="en" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/ghost/announcement-bar@~1.1/umd/announcement-bar.min.js" data-announcement-bar="https://devopscube.com/" data-api-url="https://devopscube.com/members/api/announcement/" crossorigin="anonymous"></script>
+    <link href="https://devopscube.com/webmentions/receive/" rel="webmention">
+    <script defer src="/public/cards.min.js?v=D6OJpxckK_6QDJ1o"></script>
+    <link rel="stylesheet" type="text/css" href="/public/cards.min.css?v=zbOBSN8qHrr3rC6Y">
+    <script defer src="/public/ghost-stats.min.js?v=XExDLZJ3NKpv0kSa" data-stringify-payload="false" data-datasource="analytics_events" data-storage="localStorage" data-host="https://devopscube.com/.ghost/analytics/api/v1/page_hit"  tb_site_uuid="5f2f4d20-2abf-4534-8d40-7aa233aedd43" tb_post_uuid="814799ee-9a31-403f-94be-e04549bd2f37" tb_post_type="post" tb_member_uuid="undefined" tb_member_status="undefined" tb_gift_link=""></script><style>:root {--ghost-accent-color: #FF1A75;}</style>
+    <style>
+.tag-hash-blog .post-hero__media { 
+  max-width: var(--global-post-hero-content-max-width); 
+}
+
+code { 
+  background-color: #f5f5f5;  /* Light gray background */
+  /* color: #d63384;  /* Different color for the text */ */
+  padding: 2px 4px;  /* Some padding around the text */
+  border-radius: 4px;  /* Rounded corners */
+  font-family: monospace;  /* Monospace font for code */
+  font-size: 90%;  /* Slightly smaller font size */
+} 
+
+
+.kg-card.kg-image-card img {
+    width: 90%;
+    height: auto; /* Maintain the aspect ratio */
+    display: block; /* To avoid any potential inline-block issues */
+    margin: 0 auto; /* Center the image */
+}
+
+.kg-card.kg-image-card img[src$=".png"] {
+    border: 3px solid #f3f3f3; /* You can customize the border color and size */
+    padding: 5px; /* Optional: Add some padding inside the border */
+}
+
+code[class*=language-], pre[class*=language-] {
+  font-size: 0.9em !important;
+}
+
+table.auto-wrap {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
+  }
+
+  table.auto-wrap th, table.auto-wrap td {
+    padding: 8px;
+    text-align: left;
+    vertical-align: top;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+
+  table.auto-wrap td {
+    white-space: normal;
+  }
+
+  .post-hero.is-page .post-hero__title { font-size: 3rem !important }
+
+  @media (max-width: 768px) {
+  .post-hero.is-page .post-hero__title {
+    font-size: 2rem !important; /* tablets & phones */
+  }
+}
+
+@media (max-width: 480px) {
+  .post-hero.is-page .post-hero__title {
+    font-size: 1.6rem !important; /* small phones */
+  }
+}
+
+  .header .signup-link {
+        font-size: 1rem;
+  }
+
+  /* For Deal Table */
+
+/* Base styles */
+.deal-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.deal-table th,
+.deal-table td {
+  padding: 12px;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 15px;
+}
+
+.deal-table th {
+  background-color: #f2f2f2;
+}
+
+/* Hide Discount column on mobile */
+@media (max-width: 768px) {
+  .deal-table .hide-mobile,
+  .deal-table th:nth-child(2),
+  .deal-table td:nth-child(2) {
+    display: none;
+  }
+
+  .deal-table td,
+  .deal-table th {
+    font-size: 14px;
+    display: block;
+    text-align: center;
+  }
+
+  .deal-table tr {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .deal-table a.btn {
+    display: inline-block;
+    width: 100%;
+    padding: 12px;
+    text-align: center;
+    margin-top: 8px;
+    font-size: 16px;
+  }
+}
+
+
+  
+</style>
+
+<script
+  type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.14.0/components/prism-python.min.js">
+</script>
+
+<script
+  type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.14.0/components/prism-json.min.js">
+</script>
+
+<script
+  type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.14.0/components/prism-yaml.min.js">
+</script>
+
+<script
+  type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.14.0/components/prism-bash.min.js">
+</script>
+
+<script
+  type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.14.0/components/prism-docker.min.js">
+</script>
+
+<script defer data-domain="devopscube.com" src="https://plausible.io/js/script.outbound-links.js"></script>
+<script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+<meta name='impact-site-verification' value='-1093805170'>
+  </head>
+  <body class="post-template tag-kubernetes tag-hash-migrated-1741795015845 tag-hash-wp-67d1aedf37a2cd001b59f5dc tag-hash-wp-post-67d1aedf37a2cd001b59f5df tag-hash-import-2025-03-12-15-57 tag-hash-blog " data-hero-image="">
+    <div class="progress-bar"></div>
+    
+      <header class="header js-header" data-header="floating">
+  <div class="container wrapper flex is-rel header__inner">
+<a class="header__brand" href="https://devopscube.com">        <picture class="header__logo--light">
+  <source 
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2025/03/Comtechies-Logo--10-.png 300w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="header__logo"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2025/03/Comtechies-Logo--10-.png 300w,"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/Comtechies-Logo--10-.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/03/Comtechies-Logo--10-.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/Comtechies-Logo--10-.png"
+    alt="DevOpsCube – Easy DevOps, SRE Guides &amp; Reviews"
+    loading="eager"
+  >
+</picture>          <picture class="header__logo--dark">
+  <source 
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2026/07/Comtechies-Logo--8-.png 300w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="header__logo"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2026/07/Comtechies-Logo--8-.png 300w,"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2026/07/Comtechies-Logo--8-.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2026/07/Comtechies-Logo--8-.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2026/07/Comtechies-Logo--8-.png"
+    alt="DevOpsCube – Easy DevOps, SRE Guides &amp; Reviews"
+    loading="eager"
+  >
+</picture></a>
+    <nav class="header__menu items-center">
+      
+<ul class="nav">
+    <li class="nav-tutorials" 
+      data-label="📚 Tutorials" data-length="12">
+      <a href="https://devopscube.com/list-of-devops-blogs-and-resources/">
+        <span>📚 Tutorials</span>
+      </a>
+    </li>
+    <li class="nav-kubernetes-tutorial is-subitem" 
+      data-label="-Kubernetes Tutorial" data-length="20">
+      <a href="https://devopscube.com/kubernetes-tutorials-beginners/">
+        <span>-Kubernetes Tutorial</span>
+      </a>
+    </li>
+    <li class="nav-argocd-tutorial is-subitem" 
+      data-label="-ArgoCD Tutorial" data-length="16">
+      <a href="https://devopscube.com/argo-cd-ultimate-guide/">
+        <span>-ArgoCD Tutorial</span>
+      </a>
+    </li>
+    <li class="nav-jenkins-tutorial is-subitem" 
+      data-label="-Jenkins Tutorial" data-length="17">
+      <a href="https://devopscube.com/jenkins-2-tutorials-getting-started-guide/">
+        <span>-Jenkins Tutorial</span>
+      </a>
+    </li>
+    <li class="nav-roadmaps" 
+      data-label="💻 Roadmaps" data-length="11">
+      <a href="https://devopscube.com/tag/roadmaps/">
+        <span>💻 Roadmaps</span>
+      </a>
+    </li>
+    <li class="nav-devops-engineer-roadmap is-subitem" 
+      data-label="-DevOps Engineer Roadmap" data-length="24">
+      <a href="https://devopscube.com/become-devops-engineer/">
+        <span>-DevOps Engineer Roadmap</span>
+      </a>
+    </li>
+    <li class="nav-devops-to-mlops is-subitem" 
+      data-label="-DevOps To MLOps" data-length="16">
+      <a href="https://devopscube.com/devops-to-mlops/">
+        <span>-DevOps To MLOps</span>
+      </a>
+    </li>
+    <li class="nav-kubernetes-learning-roadmap is-subitem" 
+      data-label="-Kubernetes Learning RoadMap" data-length="28">
+      <a href="https://devopscube.com/learn-kubernetes-complete-roadmap/">
+        <span>-Kubernetes Learning RoadMap</span>
+      </a>
+    </li>
+    <li class="nav-python-for-devops is-subitem" 
+      data-label="-Python For DevOps" data-length="18">
+      <a href="https://devopscube.com/python-for-devops/">
+        <span>-Python For DevOps</span>
+      </a>
+    </li>
+    <li class="nav-golang-for-devops is-subitem" 
+      data-label="-Golang For DevOps" data-length="18">
+      <a href="https://devopscube.com/golang-for-devops/">
+        <span>-Golang For DevOps</span>
+      </a>
+    </li>
+    <li class="nav-git-for-devops is-subitem" 
+      data-label="-Git For DevOps" data-length="15">
+      <a href="https://devopscube.com/git-for-devops/">
+        <span>-Git For DevOps</span>
+      </a>
+    </li>
+    <li class="nav-shell-scripting-for-devops is-subitem" 
+      data-label="-Shell Scripting For DevOps" data-length="27">
+      <a href="https://devopscube.com/linux-shell-scripting-for-devops/">
+        <span>-Shell Scripting For DevOps</span>
+      </a>
+    </li>
+    <li class="nav-certification-guides" 
+      data-label="📙Certification Guides" data-length="22">
+      <a href="https://devopscube.com/tag/certifications/">
+        <span>📙Certification Guides</span>
+      </a>
+    </li>
+    <li class="nav-cka-exam-guide is-subitem" 
+      data-label="-CKA Exam Guide" data-length="15">
+      <a href="https://devopscube.com/cka-exam-study-guide/">
+        <span>-CKA Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-ckad-exam-guide is-subitem" 
+      data-label="-CKAD Exam Guide" data-length="16">
+      <a href="https://devopscube.com/ckad-exam-study-guide/">
+        <span>-CKAD Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-cks-exam-guide is-subitem" 
+      data-label="-CKS Exam Guide" data-length="15">
+      <a href="https://devopscube.com/cks-exam-guide-tips/">
+        <span>-CKS Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-kcna-exam-guide is-subitem" 
+      data-label="-KCNA Exam Guide" data-length="16">
+      <a href="https://devopscube.com/kcna-study-guide/">
+        <span>-KCNA Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-kcsa-exam-guide is-subitem" 
+      data-label="-KCSA Exam Guide" data-length="16">
+      <a href="https://devopscube.com/kcsa-exam-study-guide/">
+        <span>-KCSA Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-prometheus-exam-guide is-subitem" 
+      data-label="-Prometheus Exam Guide" data-length="22">
+      <a href="https://devopscube.com/prometheus-certified-associate/">
+        <span>-Prometheus Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-argo-certification-guide is-subitem" 
+      data-label="-Argo Certification Guide" data-length="25">
+      <a href="https://devopscube.com/certified-argo-project-associate/">
+        <span>-Argo Certification Guide</span>
+      </a>
+    </li>
+    <li class="nav-istio-certification-guide is-subitem" 
+      data-label="-Istio Certification Guide" data-length="26">
+      <a href="https://devopscube.com/istio-certified-associate-study-guide/">
+        <span>-Istio Certification Guide</span>
+      </a>
+    </li>
+    <li class="nav-newsletter" 
+      data-label="📧 Newsletter" data-length="13">
+      <a href="https://newsletter.devopscube.com/">
+        <span>📧 Newsletter</span>
+      </a>
+    </li>
+    <li class="nav-our-courses" 
+      data-label="🎓 Our Courses" data-length="14">
+      <a href="https://courses.devopscube.com/">
+        <span>🎓 Our Courses</span>
+      </a>
+    </li>
+    <li class="nav-container-fundamentals is-subitem" 
+      data-label="- Container Fundamentals" data-length="24">
+      <a href="https://courses.devopscube.com/p/container-fundamentals-course">
+        <span>- Container Fundamentals</span>
+      </a>
+    </li>
+    <li class="nav-kubernetes-cka-preparation-course is-subitem" 
+      data-label="- Kubernetes &amp; CKA Preparation Course" data-length="37">
+      <a href="https://courses.devopscube.com/p/certified-kubernetes-administrator-course">
+        <span>- Kubernetes &amp; CKA Preparation Course</span>
+      </a>
+    </li>
+</ul>
+
+
+        <div class="header__menu--sub items-center">
+          <button class="header__menu--more is-mainitem" aria-label="Menu"><i class="icon icon-dots">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-dots" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+  <circle cx="5" cy="12" r="1"></circle>
+  <circle cx="12" cy="12" r="1"></circle>
+  <circle cx="19" cy="12" r="1"></circle>
+</svg>
+</i></button>
+          
+
+        </div>
+    </nav>
+
+    <span class="header--spacer"></span>
+
+    <button class="btn-toggle header-search__toggle" data-ghost-search title="Search" aria-label="Search">
+      <i class="icon icon-search">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+</i>    </button>
+
+  
+
+  <a href="/black-friday-deals/" class="btn signup-link btn--brand radius">DevOps Deals</a>
+
+
+    <div class="member-menu js-member-menu">
+</div>
+    <button class="btn-toggle menu__toggle js-menu-open"
+      type="button" title="Menu" aria-label="Menu">
+        <span></span>
+        <span></span>
+    </button>
+  </div>
+</header>
+
+
+      <div class="menu js-menu">
+  <div class="menu__header flex content-end">
+    <button class="btn-toggle menu__toggle is-active js-menu-close"
+      type="button" title="Menu" aria-label="Menu">
+        <span></span>
+        <span></span>
+    </button>
+  </div>
+
+  <nav class="menu__navigation">
+    
+<ul class="nav">
+    <li class="nav-tutorials" 
+      data-label="📚 Tutorials" data-length="12">
+      <a href="https://devopscube.com/list-of-devops-blogs-and-resources/">
+        <span>📚 Tutorials</span>
+      </a>
+    </li>
+    <li class="nav-kubernetes-tutorial is-subitem" 
+      data-label="-Kubernetes Tutorial" data-length="20">
+      <a href="https://devopscube.com/kubernetes-tutorials-beginners/">
+        <span>-Kubernetes Tutorial</span>
+      </a>
+    </li>
+    <li class="nav-argocd-tutorial is-subitem" 
+      data-label="-ArgoCD Tutorial" data-length="16">
+      <a href="https://devopscube.com/argo-cd-ultimate-guide/">
+        <span>-ArgoCD Tutorial</span>
+      </a>
+    </li>
+    <li class="nav-jenkins-tutorial is-subitem" 
+      data-label="-Jenkins Tutorial" data-length="17">
+      <a href="https://devopscube.com/jenkins-2-tutorials-getting-started-guide/">
+        <span>-Jenkins Tutorial</span>
+      </a>
+    </li>
+    <li class="nav-roadmaps" 
+      data-label="💻 Roadmaps" data-length="11">
+      <a href="https://devopscube.com/tag/roadmaps/">
+        <span>💻 Roadmaps</span>
+      </a>
+    </li>
+    <li class="nav-devops-engineer-roadmap is-subitem" 
+      data-label="-DevOps Engineer Roadmap" data-length="24">
+      <a href="https://devopscube.com/become-devops-engineer/">
+        <span>-DevOps Engineer Roadmap</span>
+      </a>
+    </li>
+    <li class="nav-devops-to-mlops is-subitem" 
+      data-label="-DevOps To MLOps" data-length="16">
+      <a href="https://devopscube.com/devops-to-mlops/">
+        <span>-DevOps To MLOps</span>
+      </a>
+    </li>
+    <li class="nav-kubernetes-learning-roadmap is-subitem" 
+      data-label="-Kubernetes Learning RoadMap" data-length="28">
+      <a href="https://devopscube.com/learn-kubernetes-complete-roadmap/">
+        <span>-Kubernetes Learning RoadMap</span>
+      </a>
+    </li>
+    <li class="nav-python-for-devops is-subitem" 
+      data-label="-Python For DevOps" data-length="18">
+      <a href="https://devopscube.com/python-for-devops/">
+        <span>-Python For DevOps</span>
+      </a>
+    </li>
+    <li class="nav-golang-for-devops is-subitem" 
+      data-label="-Golang For DevOps" data-length="18">
+      <a href="https://devopscube.com/golang-for-devops/">
+        <span>-Golang For DevOps</span>
+      </a>
+    </li>
+    <li class="nav-git-for-devops is-subitem" 
+      data-label="-Git For DevOps" data-length="15">
+      <a href="https://devopscube.com/git-for-devops/">
+        <span>-Git For DevOps</span>
+      </a>
+    </li>
+    <li class="nav-shell-scripting-for-devops is-subitem" 
+      data-label="-Shell Scripting For DevOps" data-length="27">
+      <a href="https://devopscube.com/linux-shell-scripting-for-devops/">
+        <span>-Shell Scripting For DevOps</span>
+      </a>
+    </li>
+    <li class="nav-certification-guides" 
+      data-label="📙Certification Guides" data-length="22">
+      <a href="https://devopscube.com/tag/certifications/">
+        <span>📙Certification Guides</span>
+      </a>
+    </li>
+    <li class="nav-cka-exam-guide is-subitem" 
+      data-label="-CKA Exam Guide" data-length="15">
+      <a href="https://devopscube.com/cka-exam-study-guide/">
+        <span>-CKA Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-ckad-exam-guide is-subitem" 
+      data-label="-CKAD Exam Guide" data-length="16">
+      <a href="https://devopscube.com/ckad-exam-study-guide/">
+        <span>-CKAD Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-cks-exam-guide is-subitem" 
+      data-label="-CKS Exam Guide" data-length="15">
+      <a href="https://devopscube.com/cks-exam-guide-tips/">
+        <span>-CKS Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-kcna-exam-guide is-subitem" 
+      data-label="-KCNA Exam Guide" data-length="16">
+      <a href="https://devopscube.com/kcna-study-guide/">
+        <span>-KCNA Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-kcsa-exam-guide is-subitem" 
+      data-label="-KCSA Exam Guide" data-length="16">
+      <a href="https://devopscube.com/kcsa-exam-study-guide/">
+        <span>-KCSA Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-prometheus-exam-guide is-subitem" 
+      data-label="-Prometheus Exam Guide" data-length="22">
+      <a href="https://devopscube.com/prometheus-certified-associate/">
+        <span>-Prometheus Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-argo-certification-guide is-subitem" 
+      data-label="-Argo Certification Guide" data-length="25">
+      <a href="https://devopscube.com/certified-argo-project-associate/">
+        <span>-Argo Certification Guide</span>
+      </a>
+    </li>
+    <li class="nav-istio-certification-guide is-subitem" 
+      data-label="-Istio Certification Guide" data-length="26">
+      <a href="https://devopscube.com/istio-certified-associate-study-guide/">
+        <span>-Istio Certification Guide</span>
+      </a>
+    </li>
+    <li class="nav-newsletter" 
+      data-label="📧 Newsletter" data-length="13">
+      <a href="https://newsletter.devopscube.com/">
+        <span>📧 Newsletter</span>
+      </a>
+    </li>
+    <li class="nav-our-courses" 
+      data-label="🎓 Our Courses" data-length="14">
+      <a href="https://courses.devopscube.com/">
+        <span>🎓 Our Courses</span>
+      </a>
+    </li>
+    <li class="nav-container-fundamentals is-subitem" 
+      data-label="- Container Fundamentals" data-length="24">
+      <a href="https://courses.devopscube.com/p/container-fundamentals-course">
+        <span>- Container Fundamentals</span>
+      </a>
+    </li>
+    <li class="nav-kubernetes-cka-preparation-course is-subitem" 
+      data-label="- Kubernetes &amp; CKA Preparation Course" data-length="37">
+      <a href="https://courses.devopscube.com/p/certified-kubernetes-administrator-course">
+        <span>- Kubernetes &amp; CKA Preparation Course</span>
+      </a>
+    </li>
+</ul>
+
+
+      
+
+  </nav>
+
+  <div class="menu__actions flex w-100">
+  </div>
+
+  <template data-toggle-template>
+    <button class="submenu-toggle" onclick="this.parentNode.classList.toggle('is-active')" title="Menu toggle" aria-label="Menu toggle">
+      <i class="icon icon-chevron-down">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-down" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <polyline points="6 9 12 15 18 9"></polyline>
+</svg>
+</i>    </button>
+  </template>
+
+</div>
+    <main class="main">
+      
+
+  <div class="container wrapper m-0-auto">
+      <div class="post-hero is-post" 
+    data-feature-image="true" data-image-style="max-width">
+    
+    <div class="post-hero__content flex flex-col">
+      <h1 class="post-hero__title">Kubernetes Pod Lifecycle Explained With Examples</h1>
+    
+
+        <div class="resource-rating">
+          <i class="icon icon-star icon--sm filled">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-star" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />
+</svg>
+
+
+
+</i>          <i class="icon icon-star icon--sm filled">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-star" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />
+</svg>
+
+
+
+</i>          <i class="icon icon-star icon--sm filled">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-star" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />
+</svg>
+
+
+
+</i>          <i class="icon icon-star icon--sm filled">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-star" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />
+</svg>
+
+
+
+</i>          <i class="icon icon-star icon--sm filled">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-star" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />
+</svg>
+
+
+
+</i>        </div>
+
+        <div class="post-info text-acc m-t"> 
+  <ul class="post-info__avatars">
+      <li class="author-avatar has-image">
+        <a href="/author/bibin/" title="Bibin Wilson" aria-label="Bibin Wilson">
+            <picture class="">
+  <source 
+    data-srcset="https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp 30w,https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp 100w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="lazyload"
+    data-srcset="https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp 30w,https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp 100w,"
+    srcset="https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp"
+    data-sizes="auto"
+    
+    data-src="https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp"
+    src="https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp"
+    alt="Bibin Wilson"
+    
+  >
+</picture>        </a>
+      </li>
+  </ul>
+  <div class="post-info__detail">
+    <span class="post-info__author"><a href="/author/bibin/">Bibin Wilson</a></span>
+    <div class="post-info__dr">
+      <time datetime="2023-09-14">Sep 14, 2023</time> 
+      <span class="post-info__readtime">3 min read</span>
+    </div>
+  </div>
+</div>    </div>
+
+      <div class="post-hero__media">
+        <figure class="post-hero__figure">
+          <picture class="">
+  <source 
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2025/03/pod-lifecycle-1.png 300w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w600/format/webp/2025/03/pod-lifecycle-1.png 600w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w1000/format/webp/2025/03/pod-lifecycle-1.png 1000w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w2000/format/webp/2025/03/pod-lifecycle-1.png 2000w"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="post-hero__img"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2025/03/pod-lifecycle-1.png 300w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w600/2025/03/pod-lifecycle-1.png 600w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w1000/2025/03/pod-lifecycle-1.png 1000w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w2000/2025/03/pod-lifecycle-1.png 2000w"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/pod-lifecycle-1.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/03/pod-lifecycle-1.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/pod-lifecycle-1.png"
+    alt="Kubernetes Pod Lifecycle Explained With Examples"
+    loading="eager"
+  >
+</picture>          
+        </figure>
+      </div>
+
+  </div>
+
+    <div class="row m-b-lg">
+      <div class="col-xs-12 col-lg-3">
+        <div class="post-toc js-post-toc is-aside"> 
+  <div class="post-toc__header flex items-center">
+    <button class="post-toc__toggle js-toc-toggle" aria-label="ToC Toggle">
+      <span class="m-r-sm uppercase">On this page</span>
+      <i class="icon icon-list icon--sm">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-list" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <line x1="9" y1="6" x2="20" y2="6" />
+  <line x1="9" y1="12" x2="20" y2="12" />
+  <line x1="9" y1="18" x2="20" y2="18" />
+  <line x1="5" y1="6" x2="5" y2="6.01" />
+  <line x1="5" y1="12" x2="5" y2="12.01" />
+  <line x1="5" y1="18" x2="5" y2="18.01" />
+</svg>
+</i>    </button>
+  </div>
+  <div class="post-toc__content js-toc"></div>
+</div>
+
+      </div>
+
+      <div class="col-xs-12 col-lg-6">
+
+        <article class="post tag-kubernetes tag-hash-migrated-1741795015845 tag-hash-wp-67d1aedf37a2cd001b59f5dc tag-hash-wp-post-67d1aedf37a2cd001b59f5df tag-hash-import-2025-03-12-15-57 tag-hash-blog content post-access-public no-overflow">
+          <p>In this blog, we will look at the lifecycle of a Kubernetes pod with examples and illustrations.</p><p>If you are new to the concepts of pods, please read the <a href="https://devopscube.com/kubernetes-pod/">Kubernetes pod</a> blog to understand all the basics and do hands-on on creating and managing pods.</p><p>To understand the lifecycle of a pod, we will look a the following</p><ol><li>Pod Phases</li><li>Pod Conditions</li><li>Container Status</li></ol><p>To understand the concepts better, let's assume a multi-container pod with the following</p><ol><li>An init container to fetch an API secret in the runtime.</li><li>container-01 (java-api) runs the <strong>java application</strong></li><li>container-02 (log-reader) fetches the application logs and sends them to a log forwarder.</li></ol><p>We will understand the pod lifecycle by understanding what happens when we deploy the pod with the above requirements.</p><h2 id="pod-phases">Pod Phases</h2><p>When you deploy a pod, it could typically fall under any one of the following phases.</p><!--kg-card-begin: html--><table><thead><tr><th>Po Phases</th><th>Description</th></tr></thead><tbody><tr><td><strong>Pending</strong></td><td>The Pod is created but not yet running.</td></tr><tr><td><strong>Running</strong></td><td>At least one container is running, or is in the process of starting or restarting.</td></tr><tr><td><strong>Succeeded</strong></td><td>All containers have been completed successfully.</td></tr><tr><td><strong>Failed</strong></td><td>At least one container has failed.</td></tr><tr><td><strong>Unknown</strong></td><td>The Pod status couldn't be obtained by the API server.</td></tr></tbody></table><!--kg-card-end: html--><p>Now let us understand these phases with a <strong>real-time example</strong> using our application pod. Let's call our pod <strong>java-api-pod</strong></p><p>Here is how the pod phases work when you deploy a pod multi-container pod.</p><h3 id="1-pending-phase">1. Pending Phase</h3><p>When you deploy the api-pod, it will be in the pending phase. Before the Pod moves to the "<strong>Running</strong>" phase, the <strong>init container will run to completion</strong> before any other containers start.</p><p>Following are some of the common scenarios where a Pod continues to be in the pending stage.</p><ol><li>Lack of and CPU &amp; Memory resources for the pod.</li><li>If the pod has a volume definition and the volume is not available.</li><li>If Kubernetes can't pull the container image.</li><li>If an init container fails to start</li></ol><p>If the init container fails with a non-zero exit code and the <strong>restartPolicy</strong> is set to <strong><code>Never</code></strong>, the pod directly goes to the failed phase.</p><h3 id="2-running-phase">2. Running Phase</h3><p>After the init container finishes fetching the secret, the Pod moves to the "Running" phase. Both <strong>container-01</strong> and <strong>container-02</strong> will start. Because our Java application is an API that needs to be running, the Pod will stay in the "<strong>Running</strong>" phase as long as the Java API application is up. For some reason, if any of the containers fail to start, the pod goes to the failed phase.</p><h3 id="3-succeeded-phase-">3. Succeeded Phase:</h3><p>This phase is not applicable for our Java application, because "<strong>Succeeded</strong>" is for containers that complete their tasks and then exit.</p><p>Our <strong>java-api-pod</strong> is meant to keep running, so it won't reach this phase unless you manually stop it.</p><p>The succeeded phase is applicable for pods that are part of Kubernetes Job/Cronjob Objects.</p><h3 id="4-failed-phase">4. <strong>Failed Phase</strong></h3><p>If your init container, Java application container, or the log reader container crashes or exits for some reason, the Pod will move to the "Failed" phase.</p><p>A pod moves to the failed phase in the following scenarios</p><ol><li>If the init container or main container exits with a non-zero exit code and has <strong>restartPolicy</strong> set to <strong>Never</strong>.</li><li>If a node fails or a pod is evicted from a node and can't be moved to another node, it moves to a failed state.</li><li>If a pod has <strong>activeDeadlineSeconds</strong> (Typically on <a href="https://devopscube.com/create-kubernetes-jobs-cron-jobs/">Jobs &amp; Cronjobs</a>) field enabled and it exceeds the time limits, the pod gets terminated and marked as Failed.</li><li>If you manually delete the pod and it can't gracefully terminate, the pod moves to a failed state.</li></ol><h3 id="5-unknown-phase">5. Unknown Phase</h3><p>This is rare, but if the api-server can't get the status of your Pod for some reason, it will be marked as "Unknown."</p><h2 id="pod-conditions">Pod Conditions</h2><p>The pod's phase gives a brief update on the pod's current status as <strong>Pod conditions </strong>give you detailed information related to scheduling, readiness, and initialization.</p><p>If you describe a pod, you will see the conditions section as shown below. The conditions are part of the <strong><code>PodStatus</code></strong> object.</p><figure class="kg-card kg-image-card"><img src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/2025/03/image-8-38.png" class="kg-image" alt="Pod Conditions" loading="lazy"></figure>
+        </article>
+
+              <div class="post-tags content-width">
+        <a href="/tag/kubernetes/" >Kubernetes</a>
+    </div>
+
+            <div class="social-share content-width m-b-lg">
+  <a class="social-share__item twitter js-share" target="_blank"
+      href="https://twitter.com/share?text=Kubernetes%20Pod%20Lifecycle%20Explained%20With%20Examples&amp;url=https://devopscube.com/kubernetes-pod-lifecycle/"
+      title="Share on X" aria-label="Share on X">
+    <i class="icon icon-twitter-x icon--sm">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+  <path d="M4 4l11.733 16h4.267l-11.733 -16z"></path>
+  <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772"></path>
+</svg>
+</i>    <span>Share</span>
+  </a>  
+  <a class="social-share__item bluesky js-share" target="_blank"
+      href="https://bsky.app/intent/compose?text=Kubernetes%20Pod%20Lifecycle%20Explained%20With%20Examples%20https://devopscube.com/kubernetes-pod-lifecycle/"
+      title="Share on Bluesky" aria-label="Share on Bluesky">
+    <i class="icon icon-brand-bluesky icon--sm">
+  <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-bluesky"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6.335 5.144c-1.654 -1.199 -4.335 -2.127 -4.335 .826c0 .59 .35 4.953 .556 5.661c.713 2.463 3.13 2.75 5.444 2.369c-4.045 .665 -4.889 3.208 -2.667 5.41c1.03 1.018 1.913 1.59 2.667 1.59c2 0 3.134 -2.769 3.5 -3.5c.333 -.667 .5 -1.167 .5 -1.5c0 .333 .167 .833 .5 1.5c.366 .731 1.5 3.5 3.5 3.5c.754 0 1.637 -.571 2.667 -1.59c2.222 -2.203 1.378 -4.746 -2.667 -5.41c2.314 .38 4.73 .094 5.444 -2.369c.206 -.708 .556 -5.072 .556 -5.661c0 -2.953 -2.68 -2.025 -4.335 -.826c-2.293 1.662 -4.76 5.048 -5.665 6.856c-.905 -1.808 -3.372 -5.194 -5.665 -6.856z" /></svg>
+</i>    <span>Share</span>
+  </a>
+  <a class="social-share__item facebook js-share" target="_blank"
+      href="https://www.facebook.com/sharer.php?u=https://devopscube.com/kubernetes-pod-lifecycle/"
+      title="Share on Facebook" aria-label="Share on Facebook">
+    <i class="icon icon-facebook icon--sm">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-facebook" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 10v4h3v7h4v-7h3l1 -4h-4v-2a1 1 0 0 1 1 -1h3v-4h-3a5 5 0 0 0 -5 5v2h-3" />
+</svg>
+
+
+
+</i>    <span>Share</span>
+  </a>
+  <a class="social-share__item linkedin js-share" target="_blank"
+      href="https://www.linkedin.com/shareArticle?mini=true&url=https://devopscube.com/kubernetes-pod-lifecycle/&title=Kubernetes%20Pod%20Lifecycle%20Explained%20With%20Examples&summary=Kubernetes%20Pod%20Lifecycle%20Explained%20With%20Examples"
+      title="Share on Linkedin" aria-label="Share on Linkedin">
+    <i class="icon icon-linkedin icon--sm">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-linkedin">
+  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+  <rect x="2" y="9" width="4" height="12"></rect>
+  <circle cx="4" cy="4" r="2"></circle>
+</svg>
+</i>    <span>Share</span>
+  </a>
+  <a class="social-share__item mail"
+      href="mailto:?subject=Kubernetes%20Pod%20Lifecycle%20Explained%20With%20Examples&body=https://devopscube.com/kubernetes-pod-lifecycle/&nbsp;Kubernetes%20Pod%20Lifecycle%20Explained%20With%20Examples"
+      title="Share by email" aria-label="Share by email">
+    <i class="icon icon-mail icon--sm">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-mail" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <rect x="3" y="5" width="18" height="14" rx="2" />
+  <polyline points="3 7 12 13 21 7" />
+</svg>
+</i>    <span>Email</span>
+  </a>
+  <button class="copy-link copy js-copy-link" data-url="https://devopscube.com/kubernetes-pod-lifecycle/"
+      title="Copy to clipboard" data-label="Copied!" aria-label="Copy to clipboard">
+    <i class="icon icon-copy icon--sm">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <rect x="8" y="8" width="12" height="12" rx="2" />
+  <path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2" />
+</svg>
+</i>    <span>Copy</span>
+  </button>
+</div>
+
+
+            <div class="content-width author-info">
+              <span class="section-title text-10 m-b uppercase">About the author</span>
+
+                <div class="author-card in-post m-b-xl author-bibin">
+  
+    <a href="/author/bibin/">
+      <figure class="author-card__profile">
+        <picture class="">
+  <source 
+    data-srcset="https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp 100w,https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp 300w,https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp 600w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="lazyload author-card__img"
+    data-srcset="https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp 100w,https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp 300w,https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp 600w,"
+    srcset="https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp"
+    data-sizes="auto"
+    
+    data-src="https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp"
+    src="https://www.gravatar.com/avatar/b715b3921f3d3ea5702f0e672b00a9a7?s&#x3D;250&amp;r&#x3D;x&amp;d&#x3D;mp"
+    alt="Bibin Wilson"
+    
+  >
+</picture>      </figure>
+    </a>
+
+  <div class="author-card__content flex-1 has-image">
+    <h2 class="author-card__name"><a href="/author/bibin/">Bibin Wilson</a></h2>
+    
+    <p class="author-card__bio">Bibin Wilson (authored over 300 tech tutorials) is a cloud and DevOps consultant with over 12+ years of IT experience. He has extensive hands-on experience with public cloud platforms and Kubernetes.</p>
+    
+    <div class="author-card__info flex flex-cc">
+
+      <ul class="author-card__social ">
+      </ul>
+    </div>
+  </div>
+</div>            </div>
+      </div>
+
+      <div class="col-xs-12 col-lg-3">
+        <aside class="sidebar">
+    <span class="section-title sm">Featured</span>
+    <div class="sidebar__section">
+<a class="sidebar-story" href="https://devopscube.com/kubernetes-tutorials-beginners/">            <figure class="sidebar-story__media m-r">
+              <picture class="">
+  <source 
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/format/webp/2025/03/kubernetes-tutorials-1.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2025/03/kubernetes-tutorials-1.png 300w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="lazyload"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/03/kubernetes-tutorials-1.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2025/03/kubernetes-tutorials-1.png 300w,"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/kubernetes-tutorials-1.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/03/kubernetes-tutorials-1.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/kubernetes-tutorials-1.png"
+    alt="Kubernetes Tutorial For Beginners: 100+ Comprehensive Guides"
+    
+  >
+</picture>            </figure>
+          <div class="sidebar-story__content">
+            <h3 class="sidebar-story__title">Kubernetes Tutorial For Beginners: 100+ Comprehensive Guides</h3>
+
+            <div class="sidebar-story__info">
+              <time datetime="2026-07-02" class="sidebar-story__date">
+                02 Jul 2026
+              </time>
+            </div>
+          </div>
+</a><a class="sidebar-story" href="https://devopscube.com/python-for-devops/">            <figure class="sidebar-story__media m-r">
+              <picture class="">
+  <source 
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/format/webp/2025/03/python-for-devops-1.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2025/03/python-for-devops-1.png 300w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="lazyload"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/03/python-for-devops-1.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2025/03/python-for-devops-1.png 300w,"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/python-for-devops-1.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/03/python-for-devops-1.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/python-for-devops-1.png"
+    alt="Python For DevOps: Guide for DevOps Engineers"
+    
+  >
+</picture>            </figure>
+          <div class="sidebar-story__content">
+            <h3 class="sidebar-story__title">Python For DevOps: Guide for DevOps Engineers</h3>
+
+            <div class="sidebar-story__info">
+              <time datetime="2026-01-19" class="sidebar-story__date">
+                19 Jan 2026
+              </time>
+            </div>
+          </div>
+</a><a class="sidebar-story" href="https://devopscube.com/become-devops-engineer/">            <figure class="sidebar-story__media m-r">
+              <picture class="">
+  <source 
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/format/webp/2025/03/devops-skillsets-min-1.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2025/03/devops-skillsets-min-1.png 300w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="lazyload"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/03/devops-skillsets-min-1.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2025/03/devops-skillsets-min-1.png 300w,"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/devops-skillsets-min-1.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/03/devops-skillsets-min-1.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/devops-skillsets-min-1.png"
+    alt="Become A DevOps Engineer in 2026: [A Practical Roadmap]"
+    
+  >
+</picture>            </figure>
+          <div class="sidebar-story__content">
+            <h3 class="sidebar-story__title">Become A DevOps Engineer in 2026: [A Practical Roadmap]</h3>
+
+            <div class="sidebar-story__info">
+              <time datetime="2026-01-06" class="sidebar-story__date">
+                06 Jan 2026
+              </time>
+            </div>
+          </div>
+</a><a class="sidebar-story" href="https://devopscube.com/kubernetes-ai-ml-features/">            <figure class="sidebar-story__media m-r">
+              <picture class="">
+  <source 
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/format/webp/2025/06/Copy-of-Copy-of-Copy-of-Copy-of-EFS-Data-Sync.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2025/06/Copy-of-Copy-of-Copy-of-Copy-of-EFS-Data-Sync.png 300w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="lazyload"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/06/Copy-of-Copy-of-Copy-of-Copy-of-EFS-Data-Sync.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2025/06/Copy-of-Copy-of-Copy-of-Copy-of-EFS-Data-Sync.png 300w,"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/06/Copy-of-Copy-of-Copy-of-Copy-of-EFS-Data-Sync.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/06/Copy-of-Copy-of-Copy-of-Copy-of-EFS-Data-Sync.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/06/Copy-of-Copy-of-Copy-of-Copy-of-EFS-Data-Sync.png"
+    alt="Kubernetes Built-in AI/ML Features"
+    
+  >
+</picture>            </figure>
+          <div class="sidebar-story__content">
+            <h3 class="sidebar-story__title">Kubernetes Built-in AI/ML Features You Should Know</h3>
+
+            <div class="sidebar-story__info">
+              <time datetime="2025-06-05" class="sidebar-story__date">
+                05 Jun 2025
+              </time>
+            </div>
+          </div>
+</a><a class="sidebar-story" href="https://devopscube.com/jenkins-2-tutorials-getting-started-guide/">            <figure class="sidebar-story__media m-r">
+              <picture class="">
+  <source 
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/format/webp/2025/03/jenkins-beginner-tutorials-1.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2025/03/jenkins-beginner-tutorials-1.png 300w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="lazyload"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/03/jenkins-beginner-tutorials-1.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2025/03/jenkins-beginner-tutorials-1.png 300w,"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/jenkins-beginner-tutorials-1.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/03/jenkins-beginner-tutorials-1.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/jenkins-beginner-tutorials-1.png"
+    alt="Jenkins Tutorial For Beginners: 21+ Practical Guides"
+    
+  >
+</picture>            </figure>
+          <div class="sidebar-story__content">
+            <h3 class="sidebar-story__title">Jenkins Tutorial For Beginners: 21+ Practical Guides</h3>
+
+            <div class="sidebar-story__info">
+              <time datetime="2023-04-01" class="sidebar-story__date">
+                01 Apr 2023
+              </time>
+            </div>
+          </div>
+</a>    </div>
+
+    <span class="section-title sm">Latest</span>
+    <div class="sidebar__section">   
+<a class="sidebar-story" href="https://devopscube.com/proxmox-backup-software/">            <figure class="sidebar-story__media m-r">
+              <picture class="">
+  <source 
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/format/webp/2026/07/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--42-.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2026/07/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--42-.png 300w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="lazyload"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2026/07/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--42-.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2026/07/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--42-.png 300w,"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2026/07/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--42-.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2026/07/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--42-.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2026/07/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--42-.png"
+    alt="Best Proxmox Backup Software"
+    
+  >
+</picture>            </figure>
+          <div class="sidebar-story__content">
+            <h3 class="sidebar-story__title">Best Proxmox Backup Software to Consider in 2026</h3>
+
+            <div class="sidebar-story__info">
+              <time datetime="2026-07-28" class="sidebar-story__date">
+                28 Jul 2026
+              </time>
+            </div>
+          </div>
+</a><a class="sidebar-story" href="https://devopscube.com/embeddings-in-machine-learning/">            <figure class="sidebar-story__media m-r">
+              <picture class="">
+  <source 
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/format/webp/2025/08/Copy-of-Cosdddddpy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2025/08/Copy-of-Cosdddddpy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png 300w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="lazyload"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/08/Copy-of-Cosdddddpy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2025/08/Copy-of-Cosdddddpy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png 300w,"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/08/Copy-of-Cosdddddpy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/08/Copy-of-Cosdddddpy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/08/Copy-of-Cosdddddpy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png"
+    alt="What are Embeddings in AI"
+    
+  >
+</picture>            </figure>
+          <div class="sidebar-story__content">
+            <h3 class="sidebar-story__title">Embeddings in Machine Learning (A Beginner&#x27;s Guide)</h3>
+
+            <div class="sidebar-story__info">
+              <time datetime="2026-07-13" class="sidebar-story__date">
+                13 Jul 2026
+              </time>
+            </div>
+          </div>
+</a><a class="sidebar-story" href="https://devopscube.com/oci-image-volume-kubernetes-pods/">            <figure class="sidebar-story__media m-r">
+              <picture class="">
+  <source 
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/format/webp/2025/09/Copy-of-Copy-of-Copyfdsd-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2025/09/Copy-of-Copy-of-Copyfdsd-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png 300w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="lazyload"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/09/Copy-of-Copy-of-Copyfdsd-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2025/09/Copy-of-Copy-of-Copyfdsd-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png 300w,"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/09/Copy-of-Copy-of-Copyfdsd-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/09/Copy-of-Copy-of-Copyfdsd-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/09/Copy-of-Copy-of-Copyfdsd-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy.png"
+    alt="How to Mount OCI Image as Volume in Kubernetes Pods"
+    
+  >
+</picture>            </figure>
+          <div class="sidebar-story__content">
+            <h3 class="sidebar-story__title">How to Mount OCI Image as Volume in Kubernetes Pods</h3>
+
+            <div class="sidebar-story__info">
+              <time datetime="2026-07-12" class="sidebar-story__date">
+                12 Jul 2026
+              </time>
+            </div>
+          </div>
+</a><a class="sidebar-story" href="https://devopscube.com/kubeflow-pipelines/">            <figure class="sidebar-story__media m-r">
+              <picture class="">
+  <source 
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/format/webp/2026/06/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--24--1.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2026/06/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--24--1.png 300w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="lazyload"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2026/06/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--24--1.png 100w,https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2026/06/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--24--1.png 300w,"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2026/06/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--24--1.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2026/06/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--24--1.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2026/06/Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy-of-Copy--24--1.png"
+    alt="Kubeflow Pipelines Explained for Beginners"
+    
+  >
+</picture>            </figure>
+          <div class="sidebar-story__content">
+            <h3 class="sidebar-story__title">Kubeflow Pipelines Tutorial: The Ultimate Guide for Beginners</h3>
+
+            <div class="sidebar-story__info">
+              <time datetime="2026-07-02" class="sidebar-story__date">
+                02 Jul 2026
+              </time>
+            </div>
+          </div>
+</a>    </div>
+
+</aside>
+      </div>
+    </div>
+  </div>
+
+<div class="container wrapper flex flex-wrap gap-lg m-b-lg">
+  
+    <div class="post-comments radius-double p-lg p-b-0 flex-1 self-align-start" id="comments">
+    <script src="https://cdn.fastcomments.com/js/embed-v2.min.js"></script>
+    <div id="fastcomments-widget"></div>
+    <script>
+        (function () {
+            let simpleSSO = null;
+
+
+            FastCommentsUI(document.getElementById('fastcomments-widget'), {
+                tenantId: "bLpDAEhpJj",
+                urlId: window.location.pathname,
+                allowAnon: false,
+                simpleSSO: simpleSSO
+            });
+        })();
+    </script>
+
+    <div class="content-width">
+      
+    </div>
+  </div>
+
+          <div class="related-posts radius-double p-lg flex-1 self-align-start">
+        <span class="section-title sm m-b uppercase">Read next</span>
+        <div class="post-list m-b-sm">
+            <a class="post-list-item" href="/proxmox-backup-software/">
+              <h3 class="post-list-item__title">Best Proxmox Backup Software to Consider in 2026</h3>
+              <i class="icon icon-chevron-right">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <polyline points="9 6 15 12 9 18"></polyline>
+</svg>
+</i>            </a>
+            <a class="post-list-item" href="/embeddings-in-machine-learning/">
+              <h3 class="post-list-item__title">Embeddings in Machine Learning (A Beginner&#x27;s Guide)</h3>
+              <i class="icon icon-chevron-right">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <polyline points="9 6 15 12 9 18"></polyline>
+</svg>
+</i>            </a>
+            <a class="post-list-item" href="/oci-image-volume-kubernetes-pods/">
+              <h3 class="post-list-item__title">How to Mount OCI Image as Volume in Kubernetes Pods</h3>
+              <i class="icon icon-chevron-right">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <polyline points="9 6 15 12 9 18"></polyline>
+</svg>
+</i>            </a>
+            <a class="post-list-item" href="/kubeflow-pipelines/">
+              <h3 class="post-list-item__title">Kubeflow Pipelines Tutorial: The Ultimate Guide for Beginners</h3>
+              <i class="icon icon-chevron-right">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <polyline points="9 6 15 12 9 18"></polyline>
+</svg>
+</i>            </a>
+            <a class="post-list-item" href="/kubernetes-tutorials-beginners/">
+              <h3 class="post-list-item__title">Kubernetes Tutorial For Beginners: 100+ Comprehensive Guides</h3>
+              <i class="icon icon-chevron-right">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <polyline points="9 6 15 12 9 18"></polyline>
+</svg>
+</i>            </a>
+        </div>
+      </div>
+
+</div>
+
+    </main>
+
+            
+      <footer class="footer">
+  <div class="container wrapper">
+    <div class="row m-b">
+      <div class="col-xs-12 col-md-4">
+        <div class="footer__brand flex items-center">
+            <picture class="">
+  <source 
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/format/webp/2025/03/Comtechies-Logo--10-.png 300w,"
+    data-sizes="auto"
+    
+    type="image/webp"
+  >
+  <img class="footer__logo m-r lazyload"
+    data-srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w300/2025/03/Comtechies-Logo--10-.png 300w,"
+    srcset="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/Comtechies-Logo--10-.png"
+    data-sizes="auto"
+    
+    data-src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w100/2025/03/Comtechies-Logo--10-.png"
+    src="https://storage.ghost.io/c/5f/2f/5f2f4d20-2abf-4534-8d40-7aa233aedd43/content/images/size/w30/2025/03/Comtechies-Logo--10-.png"
+    alt="DevOpsCube – Easy DevOps, SRE Guides &amp; Reviews"
+    
+  >
+</picture>        </div>
+
+        <div class="footer__description" id="footer-input-label">
+          DevOpsCube – Award-winning Blog on DevOps, SRE, MLOps, Cloud &amp; CI/CD
+        </div>
+
+      </div>
+
+      <div class="col-xs-12 col-md-4 m-b footer-nav">
+        <span class="fw-700 m-b-sm display-block text-acc">Navigate</span>
+        <div class="grid col-2">
+          
+<ul class="nav">
+    <li class="nav-tutorials" 
+      data-label="📚 Tutorials" data-length="12">
+      <a href="https://devopscube.com/list-of-devops-blogs-and-resources/">
+        <span>📚 Tutorials</span>
+      </a>
+    </li>
+    <li class="nav-kubernetes-tutorial is-subitem" 
+      data-label="-Kubernetes Tutorial" data-length="20">
+      <a href="https://devopscube.com/kubernetes-tutorials-beginners/">
+        <span>-Kubernetes Tutorial</span>
+      </a>
+    </li>
+    <li class="nav-argocd-tutorial is-subitem" 
+      data-label="-ArgoCD Tutorial" data-length="16">
+      <a href="https://devopscube.com/argo-cd-ultimate-guide/">
+        <span>-ArgoCD Tutorial</span>
+      </a>
+    </li>
+    <li class="nav-jenkins-tutorial is-subitem" 
+      data-label="-Jenkins Tutorial" data-length="17">
+      <a href="https://devopscube.com/jenkins-2-tutorials-getting-started-guide/">
+        <span>-Jenkins Tutorial</span>
+      </a>
+    </li>
+    <li class="nav-roadmaps" 
+      data-label="💻 Roadmaps" data-length="11">
+      <a href="https://devopscube.com/tag/roadmaps/">
+        <span>💻 Roadmaps</span>
+      </a>
+    </li>
+    <li class="nav-devops-engineer-roadmap is-subitem" 
+      data-label="-DevOps Engineer Roadmap" data-length="24">
+      <a href="https://devopscube.com/become-devops-engineer/">
+        <span>-DevOps Engineer Roadmap</span>
+      </a>
+    </li>
+    <li class="nav-devops-to-mlops is-subitem" 
+      data-label="-DevOps To MLOps" data-length="16">
+      <a href="https://devopscube.com/devops-to-mlops/">
+        <span>-DevOps To MLOps</span>
+      </a>
+    </li>
+    <li class="nav-kubernetes-learning-roadmap is-subitem" 
+      data-label="-Kubernetes Learning RoadMap" data-length="28">
+      <a href="https://devopscube.com/learn-kubernetes-complete-roadmap/">
+        <span>-Kubernetes Learning RoadMap</span>
+      </a>
+    </li>
+    <li class="nav-python-for-devops is-subitem" 
+      data-label="-Python For DevOps" data-length="18">
+      <a href="https://devopscube.com/python-for-devops/">
+        <span>-Python For DevOps</span>
+      </a>
+    </li>
+    <li class="nav-golang-for-devops is-subitem" 
+      data-label="-Golang For DevOps" data-length="18">
+      <a href="https://devopscube.com/golang-for-devops/">
+        <span>-Golang For DevOps</span>
+      </a>
+    </li>
+    <li class="nav-git-for-devops is-subitem" 
+      data-label="-Git For DevOps" data-length="15">
+      <a href="https://devopscube.com/git-for-devops/">
+        <span>-Git For DevOps</span>
+      </a>
+    </li>
+    <li class="nav-shell-scripting-for-devops is-subitem" 
+      data-label="-Shell Scripting For DevOps" data-length="27">
+      <a href="https://devopscube.com/linux-shell-scripting-for-devops/">
+        <span>-Shell Scripting For DevOps</span>
+      </a>
+    </li>
+    <li class="nav-certification-guides" 
+      data-label="📙Certification Guides" data-length="22">
+      <a href="https://devopscube.com/tag/certifications/">
+        <span>📙Certification Guides</span>
+      </a>
+    </li>
+    <li class="nav-cka-exam-guide is-subitem" 
+      data-label="-CKA Exam Guide" data-length="15">
+      <a href="https://devopscube.com/cka-exam-study-guide/">
+        <span>-CKA Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-ckad-exam-guide is-subitem" 
+      data-label="-CKAD Exam Guide" data-length="16">
+      <a href="https://devopscube.com/ckad-exam-study-guide/">
+        <span>-CKAD Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-cks-exam-guide is-subitem" 
+      data-label="-CKS Exam Guide" data-length="15">
+      <a href="https://devopscube.com/cks-exam-guide-tips/">
+        <span>-CKS Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-kcna-exam-guide is-subitem" 
+      data-label="-KCNA Exam Guide" data-length="16">
+      <a href="https://devopscube.com/kcna-study-guide/">
+        <span>-KCNA Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-kcsa-exam-guide is-subitem" 
+      data-label="-KCSA Exam Guide" data-length="16">
+      <a href="https://devopscube.com/kcsa-exam-study-guide/">
+        <span>-KCSA Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-prometheus-exam-guide is-subitem" 
+      data-label="-Prometheus Exam Guide" data-length="22">
+      <a href="https://devopscube.com/prometheus-certified-associate/">
+        <span>-Prometheus Exam Guide</span>
+      </a>
+    </li>
+    <li class="nav-argo-certification-guide is-subitem" 
+      data-label="-Argo Certification Guide" data-length="25">
+      <a href="https://devopscube.com/certified-argo-project-associate/">
+        <span>-Argo Certification Guide</span>
+      </a>
+    </li>
+    <li class="nav-istio-certification-guide is-subitem" 
+      data-label="-Istio Certification Guide" data-length="26">
+      <a href="https://devopscube.com/istio-certified-associate-study-guide/">
+        <span>-Istio Certification Guide</span>
+      </a>
+    </li>
+    <li class="nav-newsletter" 
+      data-label="📧 Newsletter" data-length="13">
+      <a href="https://newsletter.devopscube.com/">
+        <span>📧 Newsletter</span>
+      </a>
+    </li>
+    <li class="nav-our-courses" 
+      data-label="🎓 Our Courses" data-length="14">
+      <a href="https://courses.devopscube.com/">
+        <span>🎓 Our Courses</span>
+      </a>
+    </li>
+    <li class="nav-container-fundamentals is-subitem" 
+      data-label="- Container Fundamentals" data-length="24">
+      <a href="https://courses.devopscube.com/p/container-fundamentals-course">
+        <span>- Container Fundamentals</span>
+      </a>
+    </li>
+    <li class="nav-kubernetes-cka-preparation-course is-subitem" 
+      data-label="- Kubernetes &amp; CKA Preparation Course" data-length="37">
+      <a href="https://courses.devopscube.com/p/certified-kubernetes-administrator-course">
+        <span>- Kubernetes &amp; CKA Preparation Course</span>
+      </a>
+    </li>
+</ul>
+
+
+        </div>
+      </div>
+
+      <div class="col-xs-12 col-sm-6 col-md-2 m-b">
+      </div>
+
+      <div class="col-xs-12 col-sm-6 col-md-2 m-b">
+        <span class="fw-700 m-b-sm display-block text-acc">Social</span>
+        <div class="social-links flex flex-col">
+          <a href="https://www.youtube.com/c/devopscube" class="youtube" aria-label="Youtube"><i class="icon icon-youtube icon--sm">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-youtube" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <desc>Download more icon variants from https://tabler-icons.io/i/brand-youtube</desc>
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <rect x="3" y="5" width="18" height="14" rx="4" />
+  <path d="M10 9l5 3l-5 3z" />
+</svg>
+
+
+
+</i><span>Youtube</span></a>
+
+
+  <a href="https://x.com/devopscube" class="twitter" aria-label="Twitter"><i class="icon icon-twitter-x icon--sm">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+  <path d="M4 4l11.733 16h4.267l-11.733 -16z"></path>
+  <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772"></path>
+</svg>
+</i><span>Twitter</span></a>
+
+<a href="https://devopscube.com/rss" class="rss" aria-label="RSS"><i class="icon icon-rss icon--sm">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-rss" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <circle cx="5" cy="19" r="1" />
+  <path d="M4 4a16 16 0 0 1 16 16" />
+  <path d="M4 11a9 9 0 0 1 9 9" />
+</svg>
+
+
+
+</i><span>RSS</span></a>
+
+
+
+<a href="https://github.com/techiescamp" class="github" aria-label="Github"><i class="icon icon-github icon--sm">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <desc>Download more icon variants from https://tabler-icons.io/i/brand-github</desc>
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+</i><span>Github</span></a>
+
+<a href="https://www.instagram.com/devopscube/" class="instagram" aria-label="Instagram"><i class="icon icon-instagram icon--sm">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-instagram" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <desc>Download more icon variants from https://tabler-icons.io/i/brand-instagram</desc>
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <rect x="4" y="4" width="16" height="16" rx="4" />
+  <circle cx="12" cy="12" r="3" />
+  <line x1="16.5" y1="7.5" x2="16.5" y2="7.501" />
+</svg>
+
+
+
+</i><span>Instagram</span></a>
+
+
+
+
+
+
+        </div>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <div class="footer__copy">
+        <span>&copy;2026&nbsp;<a href="https://devopscube.com">DevOpsCube – Easy DevOps, SRE Guides &amp; Reviews</a>.</span>
+      </div>
+
+      <div class="color-scheme flex flex-cc radius-half">
+  <div class="color-scheme-symbol">
+    <span class="accent-bg"></span>
+  </div>
+  <select class="color-scheme-select radius-half js-color-scheme-select" aria-label="Change color scheme">
+    <option value="system" selected>System</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+  </select>
+  <i class="icon icon-select">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-select" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M17 8.517L12 3 7 8.517M7 15.48l5 5.517 5-5.517"></path>
+</svg>
+
+
+
+</i></div>    </div>
+
+  </div>
+</footer>
+
+    <dialog class="notification">
+  <i class="icon icon-success notification-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-circle-check" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M9 12l2 2l4 -4" />
+</svg>
+
+
+
+</i>  <i class="icon icon-error notification-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-alert-octagon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M8.7 3h6.6c.3 0 .5 .1 .7 .3l4.7 4.7c.2 .2 .3 .4 .3 .7v6.6c0 .3 -.1 .5 -.3 .7l-4.7 4.7c-.2 .2 -.4 .3 -.7 .3h-6.6c-.3 0 -.5 -.1 -.7 -.3l-4.7 -4.7c-.2 -.2 -.3 -.4 -.3 -.7v-6.6c0 -.3 .1 -.5 .3 -.7l4.7 -4.7c.2 -.2 .4 -.3 .7 -.3z" />
+  <line x1="12" y1="8" x2="12" y2="12" />
+  <line x1="12" y1="16" x2="12.01" y2="16" />
+</svg>
+
+
+
+</i>  <i class="icon icon-warning notification-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-alert-triangle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M12 9v2m0 4v.01" />
+  <path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75" />
+</svg>
+
+
+
+</i>  <p class="notification-msg signup-success">Great! You’ve successfully signed up.</p> 
+  <p class="notification-msg signin-success">Welcome back! You&#x27;ve successfully signed in.</p> 
+  <p class="notification-msg subscribe-success">You&#x27;ve successfully subscribed to DevOpsCube – Easy DevOps, SRE Guides &amp; Reviews.</p> 
+  <p class="notification-msg link-expired">Your link has expired.</p> 
+  <p class="notification-msg checkout-success">Success! Check your email for magic link to sign-in.</p> 
+  <p class="notification-msg billing-success">Success! Your billing info has been updated.</p> 
+  <p class="notification-msg billing-cancel">Your billing was not updated.</p> 
+  <button class="notification-close js-notification-close" aria-label="Close" onclick="closeNotification(event.currentTarget.parentNode);">
+    <i class="icon icon-x">
+  <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <line x1="18" y1="6" x2="6" y2="18" />
+  <line x1="6" y1="6" x2="18" y2="18" />
+</svg>
+</i>  </button>
+</dialog>
+
+      
+    
+
+    
+
+      <script>
+    document.addEventListener('readystatechange', function(event) {
+      if (document.readyState === "complete") {
+        // table of contents toggle
+        const tocToggleBtn = document.querySelector('.js-toc-toggle');
+        const postToc = document.querySelector('.js-post-toc');
+
+        // media query for TOC function
+        const mqSmall = window.matchMedia('(max-width: 767px)');
+        const mqLarge = window.matchMedia('(min-width: 768px)');
+
+        if (tocToggleBtn && postToc) {
+          // if device is large, show the TOC by default
+          if (mqLarge.matches) postToc.classList.add('is-active');
+
+          // open/close the TOC
+          tocToggleBtn.onclick = function(event) {
+            postToc.classList.toggle('is-active');
+          }
+        }
+
+        // get header height as threshold
+        const headerHeight = parseInt(getComputedStyle(document.documentElement)
+                        .getPropertyValue('--global-header-height'));
+        const headerStyle = document.querySelector('.js-header').getAttribute('data-header');
+        let headerOffset = headerStyle === 'normal' ? 20 : headerHeight + 20;
+
+        if (postToc) {
+          tocbot.init({
+            // Where to render the table of contents.
+            tocSelector: '.js-toc',
+            // Where to grab the headings to build the table of contents.
+            contentSelector: '.content',
+            // Which headings to grab inside of the contentSelector element.
+            headingSelector: 'h1, h2, h3, h4',
+            // Ignore some headings (like header card and toggle card)
+            ignoreSelector: '[class*="kg-"],[class*="content-cta"]',
+            // For headings inside relative or absolute positioned containers within content.
+            hasInnerContainers: false,
+            // smooth scroll
+            scrollSmooth: false,
+            // offset
+            headingsOffset: headerOffset,
+            // onclick event
+            /*onClick: function(e){ 
+              e.preventDefault();
+              const href = this.getAttribute('href');
+              if (href) {
+                const el = document.querySelector(`#${CSS.escape(href.substring(1))}`);
+                let offset;
+                const bodyRect = document.body.getBoundingClientRect().top;
+                const elementRect = el.getBoundingClientRect().top;
+                const elementPosition = elementRect - bodyRect;
+                offset = headerOffset; 
+                themeGlobal.scrollPos = elementPosition;
+                const offsetPosition = elementPosition - offset;
+
+                window.scrollTo({
+                  top: offsetPosition,
+                  behavior: 'smooth'
+                });
+              }
+
+              // if on small screen close the TOC when clicking on item
+              if (mqSmall.matches) postToc.classList.remove('is-active');
+            }*/
+          });
+
+          document.querySelector('.js-toc .toc-list') ? postToc.classList.add('is-rendered') : null;
+        }
+      }
+    });
+  </script>
+
+  <script>
+    // Copy button
+    const copyBtn = document.querySelector('.js-copy-link');
+    if (copyBtn) {
+      copyBtn.onclick = function(event) {
+        copyToClipboard(event.currentTarget, event.currentTarget.getAttribute('data-url'));
+      }
+    }
+    
+    /** 
+    * Copy to clipboard
+    * @src - source element
+    * @str - string to copy
+    */ 
+    const copyToClipboard = function(src, str) {
+      const el = document.createElement('textarea');
+      el.value = str;
+      el.setAttribute('readonly', '');
+      el.style.position = 'absolute';
+      el.style.left = '-9999px';
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+
+      src.classList.add('has-tooltip');
+      src.setAttribute('data-label', 'Copied!');
+
+      src.onmouseleave = function() { 
+        src.classList.remove('has-tooltip');
+        setTimeout(function(){
+          src.setAttribute('data-label', '');
+        }, 500); 
+      }
+    };
+  </script>
+
+<script>
+  const navItems = document.querySelectorAll('.header .nav:not(.submenu) li, .menu .nav:not(.submenu) li')
+  const allNavItems = document.querySelectorAll('.is-subitem')
+
+  // Remove '-' signs
+  allNavItems.forEach(item => {
+    const itemName = item.querySelector('a span')
+    itemName.innerText = itemName.innerText.slice(1)
+  });
+
+  // Add subitems in place
+  let subMenu, hasItems
+  navItems.forEach((item, index) => {
+    if (item.classList.contains('is-subitem') && !navItems[index - 1].classList.contains('is-subitem')) navItems[index - 1].classList.add('is-mainitem'); 
+    subMenu = item.classList.contains('is-subitem') ? subMenu : document.createElement('ul');
+    if (item.classList.contains('is-subitem')) { 
+      subMenu.appendChild(item)
+      subMenu.classList.add('nav','submenu')
+    } else { 
+      item.appendChild(subMenu)
+    }
+  });
+</script>
+
+  <script>
+    const submenus = document.querySelectorAll('.menu .is-mainitem')
+    const toggle = document.querySelector('[data-toggle-template]');
+
+    submenus.forEach(menu => { 
+      const toggleBtn = toggle.content.cloneNode(true);
+      menu.appendChild(toggleBtn);
+    });
+  </script>
+
+  <script>
+    // Give the parameter a variable name
+    const qsParams = new URLSearchParams(window.location.search);
+    const isAction = qsParams.has('action');
+    const isStripe = qsParams.has('stripe');
+    const success = qsParams.get('success');
+    const action = qsParams.get('action');
+    const stripe = qsParams.get('stripe');
+
+    if (qsParams && isAction) {
+      if (success === "true") {
+        switch (action) {
+          case 'subscribe':
+            openNotification('subscribe-success');
+            break;
+          case 'signup': 
+            openNotification('signup-success');
+            break;
+          case 'signin':
+            openNotification('signin-success');
+            break;
+          default:
+            break;
+        }
+      } else {
+        openNotification('link-expired');
+      }
+    }
+
+    if (qsParams && isStripe) {
+      switch (stripe) {
+        case 'success':
+          openNotification('checkout-success');
+          break;
+        case 'billing-update-success':
+          openNotification('billing-success');
+          break;
+        case 'billing-update-cancel':
+          openNotification('billing-cancel');
+          break;
+        default:
+          break;
+      }
+    }
+
+    /**
+    * Handle Notifications
+    */
+    function openNotification(type) {
+      const notification = document.querySelector('dialog.notification');
+      if (notification) { 
+        notification.setAttribute('data-msg-type', type);
+        notification.show();
+        setTimeout(function(){ closeNotification(notification); }, 3000);
+      }
+    }
+    
+    /**
+    * Clean URI
+    */
+    function clearURI() {
+      window.history.replaceState({}, '', `${window.location.pathname}`);
+    }
+
+    function closeNotification(notification) {
+      notification.close();
+      clearURI();
+      setTimeout(function(){ notification.removeAttribute('data-msg-type') }, 500);
+    }
+  </script>
+
+
+    <script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const currentDomain = location.hostname.replace('www.', '');
+    const links = document.querySelectorAll('a');
+
+    links.forEach((link) => {
+      const href = link.href;
+      const linkDomain = new URL(href).hostname.replace('www.', '');
+
+      // Check if the link is an external URL or starts with "https://devopscube.com/recommends/"
+      if (linkDomain !== currentDomain || href.startsWith("https://devopscube.com/recommends/")) {
+        link.setAttribute("target", "_blank");
+        link.setAttribute("rel", "noreferrer noopener");
+      }
+    });
+  });
+</script>
+
+<script type="text/javascript">!function(e,t){(e=t.createElement("script")).src="https://cdn.convertbox.com/convertbox/js/embed.js",e.id="app-convertbox-script",e.async=true,e.dataset.uuid="33ea98a9-7fb3-477e-8034-a86b9e36bb4c",document.getElementsByTagName("head")[0].appendChild(e)}(window,document);</script>
+<script async src="https://subscribe-forms.beehiiv.com/v3/loader.js" data-beehiiv-form="e217f508-d15d-4f5b-bda2-3c7a3d529463"></script>
+
+<a href="https://newsletter.devopscube.com/subscribe"
+   class="floating-subscribe"
+   target="_blank"
+   rel="noopener">
+    📩 Join 20K+ Engineers
+</a>
+
+<style>
+.floating-subscribe {
+    position: fixed;
+    left: 24px;      /* Distance from the left edge */
+    bottom: 32px;    /* Distance from the bottom */
+    z-index: 9999;
+
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: #FF1A75;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+
+    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+}
+
+.floating-subscribe:hover {
+    opacity: .9;
+}
+
+@media (max-width:768px){
+    .floating-subscribe{
+        left:16px;
+        bottom:16px;
+    }
+}
+</style>
+  </body>
+</html>

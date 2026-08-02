@@ -2,6 +2,9 @@
 
 Hiểu rõ cấu trúc và nguyên lý hoạt động của các thành phần trong Cluster giúp bạn dễ dàng debug khi gặp sự cố.
 
+> [!TIP]
+> Bạn có thể mở và chỉnh sửa trực tiếp sơ đồ luồng kiến trúc này trong Draw.io bằng file: [Kubernetes_architecture.drawio](file:///d:/Cloud_AWS/Cloud-Learning-Journey/k8s/02_Architecture/Kubernetes_architecture.drawio)
+
 ---
 
 ## 📌 Các thành phần chính của Cluster

@@ -10,6 +10,7 @@
 *   Đơn vị nhỏ nhất và cơ bản nhất trong Kubernetes.
 *   Một Pod chứa một hoặc nhiều container chia sẻ chung Network Namespace (IP, Port) và Storage Volumes.
 *   **Init Containers:** Chạy trước container chính (thường dùng để check DB, tải file cấu hình...).
+*   👉 **Tài liệu chuyên sâu:** Xem hướng dẫn thực hành và chẩn đoán lỗi tại [Pod_Deep_Dive.md](./Pod_Deep_Dive.md).
 
 ### 2. ReplicaSets
 *   Đảm bảo duy trì một số lượng bản sao (replicas) của Pod nhất định luôn hoạt động.
