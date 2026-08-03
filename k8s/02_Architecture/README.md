@@ -3,7 +3,8 @@
 Hiểu rõ cấu trúc và nguyên lý hoạt động của các thành phần trong Cluster giúp bạn dễ dàng debug khi gặp sự cố.
 
 > [!TIP]
-> Bạn có thể mở và chỉnh sửa trực tiếp sơ đồ luồng kiến trúc này trong Draw.io bằng file: [Kubernetes_architecture.drawio](file:///d:/Cloud_AWS/Cloud-Learning-Journey/k8s/02_Architecture/Kubernetes_architecture.drawio)
+> **Tài liệu học tập chi tiết:** Đọc bài viết hướng dẫn chuyên sâu kèm sơ đồ minh họa tại [Kubernetes_Architecture_Deep_Dive.md](file:///d:/Cloud_AWS/Cloud-Learning-Journey/k8s/02_Architecture/Kubernetes_Architecture_Deep_Dive.md)
+> Bạn cũng có thể mở và chỉnh sửa trực tiếp sơ đồ kiến trúc Draw.io tại: [Kubernetes_architecture.drawio](file:///d:/Cloud_AWS/Cloud-Learning-Journey/k8s/02_Architecture/Kubernetes_architecture.drawio)
 
 ---
 

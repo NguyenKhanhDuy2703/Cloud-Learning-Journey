@@ -1,5 +1,14 @@
 # 07. Networking & Services (Mạng & Điều phối traffic)
 
+Quản lý giao tiếp mạng giữa các Pods, Services và truy cập ứng dụng từ bên ngoài vào Kubernetes Cluster.
+
+> [!TIP]
+> **Tài liệu học tập & Thực hành:**
+> - [Kubernetes_Ingress_Deep_Dive.md](file:///d:/Cloud_AWS/Cloud-Learning-Journey/k8s/07_Networking_Services/Kubernetes_Ingress_Deep_Dive.md) — Kiến trúc & Nguyên lý hoạt động chi tiết của Ingress.
+> - [Nginx_Ingress_Controller_Setup_Guide.md](file:///d:/Cloud_AWS/Cloud-Learning-Journey/k8s/07_Networking_Services/Nginx_Ingress_Controller_Setup_Guide.md) — Hướng dẫn Cài đặt & Triển khai thực hành Nginx Ingress Controller từ A-Z.
+
+---
+
 Kubernetes có mô hình mạng phẳng: Mọi Pod đều có một IP duy nhất và có thể trực tiếp giao tiếp với các Pod khác mà không cần NAT (Network Address Translation).
 
 ---
